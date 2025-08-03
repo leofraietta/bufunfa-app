@@ -1,0 +1,21 @@
+<div class="contas-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Minhas Contas</mat-card-title>
+      <button mat-raised-button color="primary" (click)="openDialog()">Adicionar Conta</button>
+    </mat-card-header>
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let conta of contas">
+          <h3 matListItemTitle>{{ conta.nome }}</h3>
+          <p matListItemLine>Tipo: {{ conta.tipo === 1 ? 'Principal' : 'Cartão de Crédito' }}</p>
+          <p matListItemLine>Saldo Inicial: {{ conta.saldoInicial | number:".2-2" }}</p>
+          <button mat-icon-button (click)="editConta(conta)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="deleteConta(conta.id)"><mat-icon>delete</mat-icon></button>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+

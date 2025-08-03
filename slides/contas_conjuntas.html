@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+      }
+      .slide-container {
+        width: 1280px;
+        min-height: 720px;
+        background-color: #ecf0f1;
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+      }
+      .title {
+        font-size: 48px;
+        color: #3498db;
+        margin-bottom: 40px;
+      }
+      .content-area {
+        display: flex;
+        align-items: center;
+        gap: 60px;
+        flex: 1;
+      }
+      .text-content {
+        flex: 1;
+      }
+      .image-content {
+        flex: 1;
+        text-align: center;
+      }
+      .feature-item {
+        font-size: 24px;
+        color: #2c3e50;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-start;
+      }
+      .feature-icon {
+        color: #2ecc71;
+        margin-right: 15px;
+        width: 30px;
+        margin-top: 3px;
+      }
+      .highlight-text {
+        color: #3498db;
+        font-weight: bold;
+      }
+      .spreadsheet-image {
+        width: 500px;
+        height: 300px;
+        object-fit: contain;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="slide-container">
+      <h1 class="title">Contas Conjuntas e Rateio</h1>
+      <div class="content-area">
+        <div class="text-content">
+          <div class="feature-item">
+            <i class="fas fa-envelope feature-icon"></i>
+            <span>Convite via email (conta Google) para compartilhar conta</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-percentage feature-icon"></i>
+            <span>Definição de <span class="highlight-text">percentual de rateio</span> (ex: 60% / 40%)</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-calendar-alt feature-icon"></i>
+            <span><span class="highlight-text">Data de apuração mensal</span> para consolidação</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-minus-circle feature-icon" style="color: #e74c3c;"></i>
+            <span>Saldo negativo: despesa automática na conta principal</span>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-plus-circle feature-icon" style="color: #2ecc71;"></i>
+            <span>Saldo positivo: manter na conta ou distribuir como receita</span>
+          </div>
+        </div>
+        <div class="image-content">
+          <img src="/home/ubuntu/bufunfa_slides/Ogc0KQrm5itG.png" alt="Planilha com Múltiplas Colunas" class="spreadsheet-image" />
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
