@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:5196/api'; // URL base do seu backend .NET
+  private baseUrl = 'http://localhost:5000/api'; // URL base do seu backend .NET
 
   constructor(private http: HttpClient) { }
 
