@@ -1,26 +1,18 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { LoginComponent } from './login/login';
-import { DashboardComponent } from './dashboard/dashboard';
-import { ContasComponent } from './contas/contas';
-import { LancamentosComponent } from './lancamentos/lancamentos';
-import { ContasConjuntasComponent } from './contas-conjuntas/contas-conjuntas';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     RouterOutlet,
+    RouterLink,
     CommonModule,
-    LoginComponent,
-    DashboardComponent,
-    ContasComponent,
-    LancamentosComponent,
-    ContasConjuntasComponent,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule
@@ -28,42 +20,43 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './app.html',
   styleUrls: ['./app.css']
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Bufunfa - Controle Financeiro Pessoal';
-  currentView = 'login'; // Controla qual componente mostrar
 
-  constructor() {
-    // Verifica se o usuário já está logado
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.currentView = 'dashboard';
-    }
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    console.log('AppComponent loaded');
+    
+    // Listen to router events to handle authentication after navigation
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        console.log('Navigation ended to:', event.url);
+        
+        // Don't redirect if we're on auth callback or already on login
+        if (event.url.startsWith('/auth/callback') || event.url === '/login') {
+          return;
+        }
+        
+        // If not authenticated and not on login page, redirect to login
+        if (!this.authService.isAuthenticated) {
+          console.log('Not authenticated, redirecting to login');
+          this.router.navigate(['/login']);
+        }
+      }
+    });
   }
 
-  showLogin() {
-    this.currentView = 'login';
-  }
-
-  showDashboard() {
-    this.currentView = 'dashboard';
-  }
-
-  showContas() {
-    this.currentView = 'contas';
-  }
-
-  showLancamentos() {
-    this.currentView = 'lancamentos';
-  }
-
-  showContasConjuntas() {
-    this.currentView = 'contas-conjuntas';
+  get isAuthenticated(): boolean {
+    return this.authService.isAuthenticated;
   }
 
   logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    this.currentView = 'login';
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
 

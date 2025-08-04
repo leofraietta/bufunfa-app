@@ -1,13 +1,13 @@
 <div class="app-container">
   <!-- Navegação principal (só aparece quando logado) -->
-  <nav *ngIf="currentView !== 'login'" class="main-nav">
+  <nav *ngIf="isAuthenticated" class="main-nav">
     <mat-toolbar color="primary">
       <span>{{ title }}</span>
       <span class="spacer"></span>
-      <button mat-button (click)="showDashboard()">Dashboard</button>
-      <button mat-button (click)="showContas()">Contas</button>
-      <button mat-button (click)="showLancamentos()">Lançamentos</button>
-      <button mat-button (click)="showContasConjuntas()">Contas Conjuntas</button>
+      <button mat-button routerLink="/dashboard">Dashboard</button>
+      <button mat-button routerLink="/contas">Contas</button>
+      <button mat-button routerLink="/lancamentos">Lançamentos</button>
+      <button mat-button routerLink="/contas-conjuntas">Contas Conjuntas</button>
       <button mat-icon-button (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
@@ -16,11 +16,7 @@
 
   <!-- Conteúdo principal -->
   <main class="main-content">
-    <app-login *ngIf="currentView === 'login'"></app-login>
-    <app-dashboard *ngIf="currentView === 'dashboard'"></app-dashboard>
-    <app-contas *ngIf="currentView === 'contas'"></app-contas>
-    <app-lancamentos *ngIf="currentView === 'lancamentos'"></app-lancamentos>
-    <app-contas-conjuntas *ngIf="currentView === 'contas-conjuntas'"></app-contas-conjuntas>
+    <router-outlet></router-outlet>
   </main>
 </div>
 

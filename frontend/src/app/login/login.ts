@@ -13,7 +13,7 @@ export class LoginComponent {
   
   loginWithGoogle() {
     // Redireciona para o endpoint de autenticação Google do backend
-    window.location.href = 'http://localhost:5196/api/auth/google-login';
+    window.location.href = 'http://localhost:5000/api/auth/google-login';
   }
 }
 

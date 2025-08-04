@@ -30,28 +30,52 @@ namespace Bufunfa.Api.Controllers
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
 
-        [HttpGet("google-callback")]
+        [HttpGet("signin-google")]
         public async Task<IActionResult> GoogleCallback()
         {
+            // Debug: Log all available claims
+            Console.WriteLine("=== GoogleCallback Debug ===");
+            Console.WriteLine($"User authenticated: {User.Identity.IsAuthenticated}");
+            Console.WriteLine($"Authentication type: {User.Identity.AuthenticationType}");
+            
+            if (User.Identity.IsAuthenticated)
+            {
+                Console.WriteLine("Available claims:");
+                foreach (var claim in User.Claims)
+                {
+                    Console.WriteLine($"  {claim.Type}: {claim.Value}");
+                }
+            }
+
             var authenticateResult = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+            Console.WriteLine($"Authenticate result succeeded: {authenticateResult.Succeeded}");
 
             if (!authenticateResult.Succeeded)
             {
+                Console.WriteLine($"Authentication failed. Error: {authenticateResult.Failure?.Message}");
                 return BadRequest("Autenticação Google falhou.");
             }
 
             var claims = authenticateResult.Principal.Claims;
+            Console.WriteLine($"Claims count: {claims.Count()}");
+            
             var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
             var name = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
             var googleId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            
+            Console.WriteLine($"Extracted - Email: {email}, Name: {name}, GoogleId: {googleId}");
+            Console.WriteLine($"GoogleId length: {googleId?.Length}, GoogleId bytes: {System.Text.Encoding.UTF8.GetByteCount(googleId ?? "")}");
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(googleId))
             {
+                Console.WriteLine("Email or GoogleId is null/empty - returning BadRequest");
                 return BadRequest("Dados do Google incompletos.");
             }
 
             // Verifica se o usuário já existe no banco de dados
+            Console.WriteLine($"Querying database for GoogleId: '{googleId}'");
             var usuario = _context.Usuarios.FirstOrDefault(u => u.GoogleId == googleId);
+            Console.WriteLine($"Database query result: {(usuario != null ? "User found" : "User not found")}");
 
             if (usuario == null)
             {
@@ -69,7 +93,11 @@ namespace Bufunfa.Api.Controllers
             // Gera o token JWT
             var token = GenerateJwtToken(usuario);
 
-            return Ok(new { Token = token, Usuario = new { usuario.Id, usuario.Nome, usuario.Email } });
+            // Redireciona para o frontend com o token como parâmetro de query
+            var frontendUrl = "http://localhost:4200/auth/callback";
+            var redirectUrl = $"{frontendUrl}?token={token}&userId={usuario.Id}&userName={Uri.EscapeDataString(usuario.Nome)}&userEmail={Uri.EscapeDataString(usuario.Email)}";
+            
+            return Redirect(redirectUrl);
         }
 
         private string GenerateJwtToken(Usuario usuario)

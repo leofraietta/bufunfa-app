@@ -16,17 +16,32 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Configura a autenticação Google
+// Configura CORS para permitir requisições do frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "http://localhost:5000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// Configura a autenticação
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = GoogleDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    // JWT Bearer como esquema padrão para APIs
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    // Cookie como esquema padrão para sign-in (necessário para OAuth2)
+    options.DefaultSignInScheme = "Cookies";
 })
-.AddGoogle(googleOptions =>
+.AddCookie("Cookies", options =>
 {
-    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    googleOptions.CallbackPath = "/signin-google"; // Pode ser ajustado conforme a necessidade
+    // Configurações mínimas para OAuth2 callback
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
 })
 .AddJwtBearer(options =>
 {
@@ -40,6 +55,17 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
+})
+.AddGoogle(googleOptions =>
+{
+    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    googleOptions.CallbackPath = "/signin-google";
+    
+    // Configurações adicionais para evitar erros
+    googleOptions.SaveTokens = true;
+    googleOptions.Scope.Add("email");
+    googleOptions.Scope.Add("profile");
 });
 
 builder.Services.AddAuthorization();
@@ -53,7 +79,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Disable HTTPS redirection in development to avoid OAuth2 callback issues
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+// Adiciona CORS antes da autenticação
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication(); // Adiciona middleware de autenticação
 app.UseAuthorization();
