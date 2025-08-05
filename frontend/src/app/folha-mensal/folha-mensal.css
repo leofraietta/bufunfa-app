@@ -1,0 +1,352 @@
+.folha-mensal-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cabeçalho com navegação */
+.header-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.header-card .mat-card-header {
+  padding: 20px;
+}
+
+.title-section {
+  width: 100%;
+}
+
+.month-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.month-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.month-selector h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.month-button {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+}
+
+.month-button mat-icon {
+  margin-right: 4px;
+  font-size: 16px;
+}
+
+/* Seletor de conta */
+.conta-selector-card {
+  background: #f8f9fa;
+}
+
+.conta-select {
+  width: 300px;
+}
+
+/* Grid de saldos */
+.saldos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.saldo-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.saldo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.saldo-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.saldo-valores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.valor-real {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.valor-provisionado {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+}
+
+.valor-real.negativo {
+  color: #f44336;
+}
+
+/* Cores específicas dos cards */
+.saldo-inicial {
+  border-left: 4px solid #2196f3;
+}
+
+.receitas {
+  border-left: 4px solid #4caf50;
+}
+
+.receitas .valor-real {
+  color: #4caf50;
+}
+
+.despesas {
+  border-left: 4px solid #f44336;
+}
+
+.despesas .valor-real {
+  color: #f44336;
+}
+
+.saldo-final {
+  border-left: 4px solid #ff9800;
+}
+
+.saldo-final .valor-real {
+  color: #ff9800;
+}
+
+/* Lista de lançamentos */
+.lancamentos-card {
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lancamentos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.lancamento-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.lancamento-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: #ccc;
+}
+
+.lancamento-item.realizado {
+  background: #f8fff8;
+  border-color: #4caf50;
+}
+
+.lancamento-item.em-atraso {
+  background: #fff8f8;
+  border-color: #f44336;
+}
+
+.lancamento-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lancamento-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.lancamento-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.lancamento-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.tipo-badge, .status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.tipo-badge.receita {
+  background: #e8f5e8;
+  color: #4caf50;
+}
+
+.tipo-badge.despesa {
+  background: #ffeaea;
+  color: #f44336;
+}
+
+.status-badge.realizado {
+  background: #e8f5e8;
+  color: #4caf50;
+}
+
+.status-badge.pendente {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.lancamento-detalhes {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.valores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.valor-principal {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.valor-principal.receita {
+  color: #4caf50;
+}
+
+.valor-principal.despesa {
+  color: #f44336;
+}
+
+.valor-secundario {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+}
+
+.datas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.data-prevista, .data-realizacao {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #666;
+}
+
+.data-realizacao {
+  color: #4caf50;
+}
+
+.lancamento-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Estado vazio */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
+  text-align: center;
+}
+
+.empty-state mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .folha-mensal-container {
+    padding: 16px;
+  }
+  
+  .saldos-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .month-navigation {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .lancamento-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .lancamento-detalhes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .datas {
+    align-items: flex-start;
+  }
+}
+

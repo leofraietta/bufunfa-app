@@ -27,10 +27,13 @@ namespace Bufunfa.Api.Models
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Valor { get; set; }
+        public decimal ValorProvisionado { get; set; }
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? ValorReal { get; set; }
 
         [Required]
-        public DateTime Data { get; set; }
+        public DateTime DataInicial { get; set; }
 
         [Required]
         public TipoLancamento Tipo { get; set; }
@@ -40,11 +43,12 @@ namespace Bufunfa.Api.Models
 
         // Para lançamentos parcelados
         public int? QuantidadeParcelas { get; set; }
-        public int? ParcelaAtual { get; set; }
 
-        // Para lançamentos recorrentes (provisionamento)
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? ValorProvisionado { get; set; }
+        // Para lançamentos recorrentes - dia do mês (1-31)
+        public int? DiaVencimento { get; set; }
+
+        // Data final para lançamentos recorrentes (opcional)
+        public DateTime? DataFinal { get; set; }
 
         // Chaves estrangeiras
         [Required]
@@ -57,6 +61,24 @@ namespace Bufunfa.Api.Models
         [Required]
         public int UsuarioId { get; set; }
         public Usuario Usuario { get; set; }
+
+        // Controle
+        public DateTime DataCriacao { get; set; }
+        public DateTime? DataAtualizacao { get; set; }
+        public bool Ativo { get; set; } = true;
+
+        // Relacionamento com lançamentos de folha
+        public ICollection<LancamentoFolha> LancamentosFolha { get; set; } = new List<LancamentoFolha>();
+
+        // Propriedades calculadas
+        [NotMapped]
+        public decimal Valor => ValorReal ?? ValorProvisionado;
+
+        [NotMapped]
+        public DateTime Data => DataInicial;
+
+        [NotMapped]
+        public int? ParcelaAtual => null; // Será calculado dinamicamente para cada folha
     }
 }
 

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Data;
+using Bufunfa.Api.Services;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +16,9 @@ builder.Services.AddSwaggerGen();
 // Configura o DbContext para usar PostgreSQL
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Registrar serviços
+builder.Services.AddScoped<FolhaMensalService>();
 
 // Configura CORS para permitir requisições do frontend
 builder.Services.AddCors(options =>

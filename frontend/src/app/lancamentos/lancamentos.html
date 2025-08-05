@@ -8,9 +8,17 @@
       <mat-list>
         <mat-list-item *ngFor="let lancamento of lancamentos">
           <h3 matListItemTitle>{{ lancamento.descricao }}</h3>
-          <p matListItemLine>Valor: {{ lancamento.valor | number:".2-2" }}</p>
+          <p matListItemLine>
+            Valor: {{ (lancamento.valorReal || lancamento.valorProvisionado || lancamento.valor) | number:".2-2" }}
+            <span *ngIf="lancamento.valorProvisionado && lancamento.valorReal && lancamento.valorProvisionado !== lancamento.valorReal">
+              (Provisionado: {{ lancamento.valorProvisionado | number:".2-2" }})
+            </span>
+          </p>
           <p matListItemLine>Data: {{ lancamento.data | date:"shortDate" }}</p>
-          <p matListItemLine>Tipo: {{ lancamento.tipo === 1 ? 'Receita' : 'Despesa' }}</p>
+          <p matListItemLine>
+            Tipo: {{ lancamento.tipo === 1 ? 'Receita' : 'Despesa' }} - 
+            {{ getTipoRecorrenciaText(lancamento.tipoRecorrencia) }}
+          </p>
           <button mat-icon-button (click)="editLancamento(lancamento)"><mat-icon>edit</mat-icon></button>
           <button mat-icon-button color="warn" (click)="deleteLancamento(lancamento.id)"><mat-icon>delete</mat-icon></button>
         </mat-list-item>

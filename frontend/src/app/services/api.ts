@@ -90,6 +90,31 @@ export class ApiService {
     return this.http.post<any>(`${this.baseUrl}/Lancamentos/consolidar-fatura/${contaId}`, {}, { headers: this.getHeaders() });
   }
 
+  // Métodos para Folhas Mensais
+  getFolhasMensais(ano: number, mes: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/FolhasMensais/${ano}/${mes}`, { headers: this.getHeaders() });
+  }
+
+  getFolhaMensal(contaId: number, ano: number, mes: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/FolhasMensais/${contaId}/${ano}/${mes}`, { headers: this.getHeaders() });
+  }
+
+  abrirFolhaMensal(contaId: number, ano: number, mes: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/FolhasMensais/${contaId}/${ano}/${mes}/abrir`, {}, { headers: this.getHeaders() });
+  }
+
+  realizarLancamentoFolha(lancamentoFolhaId: number, valorReal: number, dataRealizacao?: Date): Observable<any> {
+    const body = {
+      valorReal: valorReal,
+      dataRealizacao: dataRealizacao || new Date()
+    };
+    return this.http.put<any>(`${this.baseUrl}/FolhasMensais/lancamentos/${lancamentoFolhaId}/realizar`, body, { headers: this.getHeaders() });
+  }
+
+  getResumoMensal(ano: number, mes: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/FolhasMensais/resumo/${ano}/${mes}`, { headers: this.getHeaders() });
+  }
+
   // Métodos para Contas Conjuntas
   getContasConjuntas(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/ContasConjuntas`, { headers: this.getHeaders() });

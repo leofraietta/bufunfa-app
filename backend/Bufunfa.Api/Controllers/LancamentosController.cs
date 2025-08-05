@@ -98,15 +98,16 @@ namespace Bufunfa.Api.Controllers
                         _context.Lancamentos.Add(new Lancamento
                         {
                             Descricao = $"{lancamento.Descricao} ({i + 1}/{lancamento.QuantidadeParcelas.Value})",
-                            Valor = lancamento.Valor,
-                            Data = lancamento.Data.AddMonths(i),
+                            ValorProvisionado = lancamento.ValorProvisionado,
+                            DataInicial = lancamento.DataInicial.AddMonths(i),
                             Tipo = lancamento.Tipo,
                             TipoRecorrencia = lancamento.TipoRecorrencia,
-                            ParcelaAtual = i + 1,
                             QuantidadeParcelas = lancamento.QuantidadeParcelas,
                             ContaId = lancamento.ContaId,
                             CategoriaId = lancamento.CategoriaId,
-                            UsuarioId = userId
+                            UsuarioId = userId,
+                            DataCriacao = DateTime.Now,
+                            Ativo = true
                         });
                     }
                 }
@@ -213,7 +214,7 @@ namespace Bufunfa.Api.Controllers
             {
                 // Calcula o total da fatura para o período
                 var totalFatura = contaCartao.Lancamentos
-                    .Where(l => l.Data.Month == DateTime.Now.Month && l.Data.Year == DateTime.Now.Year && l.Tipo == TipoLancamento.Despesa)
+                    .Where(l => l.DataInicial.Month == DateTime.Now.Month && l.DataInicial.Year == DateTime.Now.Year && l.Tipo == TipoLancamento.Despesa)
                     .Sum(l => l.Valor);
 
                 // Cria um lançamento de despesa na conta principal do usuário
@@ -227,12 +228,14 @@ namespace Bufunfa.Api.Controllers
                 _context.Lancamentos.Add(new Lancamento
                 {
                     Descricao = $"Fatura Cartão {contaCartao.Nome} - {DateTime.Now.ToString("MM/yyyy")}",
-                    Valor = totalFatura,
-                    Data = contaCartao.DataVencimento.Value, // Data de vencimento da fatura
+                    ValorProvisionado = totalFatura,
+                    DataInicial = contaCartao.DataVencimento.Value, // Data de vencimento da fatura
                     Tipo = TipoLancamento.Despesa,
                     TipoRecorrencia = TipoRecorrencia.Esporadico,
                     ContaId = contaPrincipal.Id,
-                    UsuarioId = userId
+                    UsuarioId = userId,
+                    DataCriacao = DateTime.Now,
+                    Ativo = true
                 });
 
                 await _context.SaveChangesAsync();

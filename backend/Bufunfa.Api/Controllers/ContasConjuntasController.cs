@@ -240,12 +240,14 @@ namespace Bufunfa.Api.Controllers
                         _context.Lancamentos.Add(new Lancamento
                         {
                             Descricao = $"Rateio Despesa Conta Conjunta {contaConjunta.Nome}",
-                            Valor = valorRateado,
-                            Data = DateTime.Now,
+                            ValorProvisionado = valorRateado,
+                            DataInicial = DateTime.Now,
                             Tipo = TipoLancamento.Despesa,
                             TipoRecorrencia = TipoRecorrencia.Esporadico,
                             ContaId = contaPrincipalUsuario.Id,
-                            UsuarioId = rateio.UsuarioId
+                            UsuarioId = rateio.UsuarioId,
+                            DataCriacao = DateTime.Now,
+                            Ativo = true
                         });
                     }
                 }
@@ -266,12 +268,14 @@ namespace Bufunfa.Api.Controllers
                             _context.Lancamentos.Add(new Lancamento
                             {
                                 Descricao = $"Rateio Receita Conta Conjunta {contaConjunta.Nome}",
-                                Valor = valorRateado,
-                                Data = DateTime.Now,
+                                ValorProvisionado = valorRateado,
+                                DataInicial = DateTime.Now,
                                 Tipo = TipoLancamento.Receita,
                                 TipoRecorrencia = TipoRecorrencia.Esporadico,
                                 ContaId = contaPrincipalUsuario.Id,
-                                UsuarioId = rateio.UsuarioId
+                                UsuarioId = rateio.UsuarioId,
+                                DataCriacao = DateTime.Now,
+                                Ativo = true
                             });
                         }
                     }

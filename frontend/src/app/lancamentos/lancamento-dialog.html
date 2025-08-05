@@ -1,0 +1,115 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar Lançamento' : 'Novo Lançamento' }}</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="lancamentoForm" class="lancamento-form">
+    
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descrição</mat-label>
+      <input matInput formControlName="descricao" placeholder="Ex: Salário, Supermercado, Aluguel">
+      <mat-error *ngIf="lancamentoForm.get('descricao')?.hasError('required')">
+        Descrição é obrigatória
+      </mat-error>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="tipo">
+          <mat-option [value]="1">Receita</mat-option>
+          <mat-option [value]="2">Despesa</mat-option>
+        </mat-select>
+        <mat-error *ngIf="lancamentoForm.get('tipo')?.hasError('required')">
+          Tipo é obrigatório
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Valor Provisionado</mat-label>
+        <input matInput type="number" formControlName="valorProvisionado" placeholder="0.00" step="0.01">
+        <span matTextPrefix>R$ </span>
+        <mat-error *ngIf="lancamentoForm.get('valorProvisionado')?.hasError('required')">
+          Valor é obrigatório
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Valor Real</mat-label>
+        <input matInput type="number" formControlName="valorReal" placeholder="0.00" step="0.01">
+        <span matTextPrefix>R$ </span>
+        <mat-hint>Deixe vazio se ainda não foi realizado</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Data</mat-label>
+        <input matInput [matDatepicker]="dataPicker" formControlName="data">
+        <mat-datepicker-toggle matIconSuffix [for]="dataPicker"></mat-datepicker-toggle>
+        <mat-datepicker #dataPicker></mat-datepicker>
+        <mat-error *ngIf="lancamentoForm.get('data')?.hasError('required')">
+          Data é obrigatória
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Tipo de Recorrência</mat-label>
+      <mat-select formControlName="tipoRecorrencia" (selectionChange)="onTipoRecorrenciaChange($event.value)">
+        <mat-option [value]="1">Esporádica</mat-option>
+        <mat-option [value]="2">Recorrente</mat-option>
+        <mat-option [value]="3">Parcelada</mat-option>
+      </mat-select>
+      <mat-error *ngIf="lancamentoForm.get('tipoRecorrencia')?.hasError('required')">
+        Tipo de recorrência é obrigatório
+      </mat-error>
+    </mat-form-field>
+
+    <!-- Campos específicos para Parcelada -->
+    <div *ngIf="isParcelada" class="parcelada-fields">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Número de Parcelas</mat-label>
+        <input matInput type="number" formControlName="numeroParcelas" placeholder="Ex: 12" min="1">
+        <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('required')">
+          Número de parcelas é obrigatório
+        </mat-error>
+        <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('min')">
+          Deve ter pelo menos 1 parcela
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Conta</mat-label>
+      <mat-select formControlName="contaId">
+        <mat-option *ngFor="let conta of contas" [value]="conta.id">
+          {{ conta.nome }}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="lancamentoForm.get('contaId')?.hasError('required')">
+        Conta é obrigatória
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Categoria (Opcional)</mat-label>
+      <mat-select formControlName="categoriaId">
+        <mat-option [value]="null">Nenhuma</mat-option>
+        <mat-option *ngFor="let categoria of categorias" [value]="categoria.id">
+          {{ categoria.nome }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button color="primary" 
+          [disabled]="lancamentoForm.invalid || isLoading" 
+          (click)="onSave()">
+    <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+    {{ isEdit ? 'Atualizar' : 'Criar' }}
+  </button>
+</mat-dialog-actions>
+
