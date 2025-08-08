@@ -1,0 +1,129 @@
+<div class="provisionamento-container">
+  <div class="header">
+    <h2>Provisionamento de Mercado</h2>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="month-selector">
+        <mat-label>Mês/Ano</mat-label>
+        <mat-select [(value)]="mesAnoSelecionado" (selectionChange)="onMesAnoChange()">
+          <mat-option *ngFor="let mesAno of mesesDisponiveis" [value]="mesAno.value">
+            {{ mesAno.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="openProvisionamentoDialog()">
+        <mat-icon>add</mat-icon>
+        Novo Provisionamento
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumo Geral -->
+  <div class="resumo-geral" *ngIf="resumoGeral">
+    <mat-card class="resumo-card">
+      <mat-card-header>
+        <mat-card-title>Resumo do Mês</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="resumo-grid">
+          <div class="resumo-item">
+            <span class="label">Total Provisionado</span>
+            <span class="valor provisionado">{{ resumoGeral.totalProvisionado | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="resumo-item">
+            <span class="label">Total Gasto</span>
+            <span class="valor gasto">{{ resumoGeral.totalGasto | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="resumo-item">
+            <span class="label">Diferença</span>
+            <span class="valor" [ngClass]="{'positivo': resumoGeral.diferenca >= 0, 'negativo': resumoGeral.diferenca < 0}">
+              {{ resumoGeral.diferenca | currency:'BRL':'symbol':'1.2-2' }}
+            </span>
+          </div>
+          <div class="resumo-item">
+            <span class="label">% Utilizado</span>
+            <span class="valor">{{ resumoGeral.percentualUtilizado | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Lista de Provisionamentos -->
+  <div class="provisionamentos-list">
+    <mat-card *ngFor="let prov of provisionamentos" class="provisionamento-card">
+      <mat-card-header>
+        <mat-card-title>{{ prov.categoriaNome }}</mat-card-title>
+        <mat-card-subtitle>{{ prov.contaNome }}</mat-card-subtitle>
+        <div class="card-actions">
+          <button mat-icon-button (click)="adicionarGasto(prov.id)">
+            <mat-icon>add_shopping_cart</mat-icon>
+          </button>
+          <button mat-icon-button (click)="editarProvisionamento(prov)">
+            <mat-icon>edit</mat-icon>
+          </button>
+        </div>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <div class="provisionamento-info">
+          <div class="valores">
+            <div class="valor-item">
+              <span class="label">Provisionado</span>
+              <span class="valor provisionado">{{ prov.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="valor-item">
+              <span class="label">Gasto Real</span>
+              <span class="valor gasto">{{ prov.valorGastoReal | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="valor-item">
+              <span class="label">Restante</span>
+              <span class="valor" [ngClass]="{'positivo': prov.diferenca >= 0, 'negativo': prov.diferenca < 0}">
+                {{ prov.diferenca | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Barra de Progresso -->
+          <div class="progress-container">
+            <mat-progress-bar 
+              mode="determinate" 
+              [value]="prov.percentualUtilizado"
+              [ngClass]="getProgressBarClass(prov.percentualUtilizado)">
+            </mat-progress-bar>
+            <span class="progress-text">{{ prov.percentualUtilizado | number:'1.1-1' }}% utilizado</span>
+          </div>
+
+          <!-- Lista de Gastos -->
+          <div class="gastos-list" *ngIf="prov.gastosReais && prov.gastosReais.length > 0">
+            <h4>Gastos Realizados ({{ prov.quantidadeGastos }})</h4>
+            <div class="gasto-item" *ngFor="let gasto of prov.gastosReais.slice(0, 3)">
+              <span class="gasto-descricao">{{ gasto.descricao }}</span>
+              <span class="gasto-valor">{{ gasto.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+              <span class="gasto-data">{{ gasto.data | date:'dd/MM' }}</span>
+            </div>
+            <button mat-button *ngIf="prov.gastosReais.length > 3" (click)="verTodosGastos(prov)">
+              Ver todos os {{ prov.gastosReais.length }} gastos
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Estado vazio -->
+  <div class="empty-state" *ngIf="!isLoading && provisionamentos.length === 0">
+    <mat-icon class="empty-icon">shopping_cart</mat-icon>
+    <h3>Nenhum provisionamento encontrado</h3>
+    <p>Crie seu primeiro provisionamento de mercado para começar a controlar seus gastos.</p>
+    <button mat-raised-button color="primary" (click)="openProvisionamentoDialog()">
+      Criar Provisionamento
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>Carregando provisionamentos...</p>
+  </div>
+</div>
+

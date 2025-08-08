@@ -19,6 +19,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Registrar serviços
 builder.Services.AddScoped<FolhaMensalService>();
+builder.Services.AddScoped<ICartaoCreditoService, CartaoCreditoService>();
+builder.Services.AddScoped<IProvisionamentoService, ProvisionamentoService>();
 
 // Configura CORS para permitir requisições do frontend
 builder.Services.AddCors(options =>

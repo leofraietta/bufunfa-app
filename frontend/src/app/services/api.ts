@@ -90,6 +90,59 @@ export class ApiService {
     return this.http.post<any>(`${this.baseUrl}/Lancamentos/consolidar-fatura/${contaId}`, {}, { headers: this.getHeaders() });
   }
 
+  // Métodos para Cartão de Crédito
+  podeAdicionarLancamentoCartao(contaId: number, dataLancamento: Date): Observable<boolean> {
+    const params = `?dataLancamento=${dataLancamento.toISOString()}`;
+    return this.http.get<boolean>(`${this.baseUrl}/CartaoCredito/${contaId}/pode-adicionar-lancamento${params}`, { headers: this.getHeaders() });
+  }
+
+  fecharFaturaCartao(contaId: number, ano: number, mes: number): Observable<any> {
+    const body = { ano, mes };
+    return this.http.post<any>(`${this.baseUrl}/CartaoCredito/${contaId}/fechar-fatura`, body, { headers: this.getHeaders() });
+  }
+
+  consolidarFaturaCartaoAvancado(contaId: number, contaPrincipalId: number, ano: number, mes: number): Observable<any> {
+    const body = { contaPrincipalId, ano, mes };
+    return this.http.post<any>(`${this.baseUrl}/CartaoCredito/${contaId}/consolidar-fatura`, body, { headers: this.getHeaders() });
+  }
+
+  calcularTotalFaturaCartao(contaId: number, ano: number, mes: number): Observable<number> {
+    const params = `?ano=${ano}&mes=${mes}`;
+    return this.http.get<number>(`${this.baseUrl}/CartaoCredito/${contaId}/total-fatura${params}`, { headers: this.getHeaders() });
+  }
+
+  faturaCartaoEstaFechada(contaId: number, ano: number, mes: number): Observable<boolean> {
+    const params = `?ano=${ano}&mes=${mes}`;
+    return this.http.get<boolean>(`${this.baseUrl}/CartaoCredito/${contaId}/fatura-fechada${params}`, { headers: this.getHeaders() });
+  }
+
+  processarFaturasVencidas(): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/CartaoCredito/processar-faturas-vencidas`, {}, { headers: this.getHeaders() });
+  }
+
+  // Métodos para Provisionamento de Mercado
+  getProvisionamentos(ano: number, mes: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/Provisionamento/${ano}/${mes}`, { headers: this.getHeaders() });
+  }
+
+  getProvisionamento(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/Provisionamento/${id}`, { headers: this.getHeaders() });
+  }
+
+  criarProvisionamento(contaId: number, categoriaId: number, valorMensal: number, ano: number, mes: number): Observable<any> {
+    const body = { contaId, categoriaId, valorMensal, ano, mes };
+    return this.http.post<any>(`${this.baseUrl}/Provisionamento`, body, { headers: this.getHeaders() });
+  }
+
+  adicionarGastoReal(provisionamentoId: number, valor: number, descricao: string, data: Date): Observable<any> {
+    const body = { valor, descricao, data };
+    return this.http.post<any>(`${this.baseUrl}/Provisionamento/${provisionamentoId}/gasto`, body, { headers: this.getHeaders() });
+  }
+
+  getResumoProvisionamento(provisionamentoId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/Provisionamento/${provisionamentoId}/resumo`, { headers: this.getHeaders() });
+  }
+
   // Métodos para Folhas Mensais
   getFolhasMensais(ano: number, mes: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/FolhasMensais/${ano}/${mes}`, { headers: this.getHeaders() });

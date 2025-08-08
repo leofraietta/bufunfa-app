@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Models;
+using Bufunfa.Api.Services;
 
 namespace Bufunfa.Api.Data
 {
@@ -17,6 +18,8 @@ namespace Bufunfa.Api.Data
         public DbSet<Rateio> Rateios { get; set; }
         public DbSet<FolhaMensal> FolhasMensais { get; set; }
         public DbSet<LancamentoFolha> LancamentosFolha { get; set; }
+        public DbSet<ProvisionamentoMercado> ProvisionamentosMercado { get; set; }
+        public DbSet<GastoRealMercado> GastosReaisMercado { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +44,31 @@ namespace Bufunfa.Api.Data
                 .HasForeignKey(lf => lf.LancamentoOrigemId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Configurações para ProvisionamentoMercado
+            modelBuilder.Entity<ProvisionamentoMercado>()
+                .HasIndex(p => new { p.UsuarioId, p.ContaId, p.CategoriaId, p.Ano, p.Mes })
+                .IsUnique()
+                .HasDatabaseName("IX_ProvisionamentoMercado_Usuario_Conta_Categoria_Ano_Mes");
+
+            modelBuilder.Entity<ProvisionamentoMercado>()
+                .Property(p => p.ValorProvisionado)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<ProvisionamentoMercado>()
+                .Property(p => p.ValorGastoReal)
+                .HasColumnType("decimal(18,2)");
+
+            // Configurações para GastoRealMercado
+            modelBuilder.Entity<GastoRealMercado>()
+                .HasOne(g => g.ProvisionamentoMercado)
+                .WithMany(p => p.GastosReais)
+                .HasForeignKey(g => g.ProvisionamentoMercadoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GastoRealMercado>()
+                .Property(g => g.Valor)
+                .HasColumnType("decimal(18,2)");
+
             // Configurações para Lancamento
             modelBuilder.Entity<Lancamento>()
                 .Property(l => l.DataCriacao)
@@ -54,6 +82,16 @@ namespace Bufunfa.Api.Data
             // Configurações para FolhaMensal
             modelBuilder.Entity<FolhaMensal>()
                 .Property(f => f.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Configurações para ProvisionamentoMercado
+            modelBuilder.Entity<ProvisionamentoMercado>()
+                .Property(p => p.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Configurações para GastoRealMercado
+            modelBuilder.Entity<GastoRealMercado>()
+                .Property(g => g.DataCriacao)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
         }
     }
