@@ -117,6 +117,72 @@ namespace Bufunfa.Api.Migrations
                     b.ToTable("ContasConjuntas");
                 });
 
+            modelBuilder.Entity("Bufunfa.Api.Models.FolhaMensal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DataFechamento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Fechada")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Mes")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SaldoFinalProvisionado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SaldoFinalReal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SaldoInicialProvisionado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SaldoInicialReal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalDespesasProvisionadas")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalDespesasReais")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalReceitasProvisionadas")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalReceitasReais")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("UsuarioId", "ContaId", "Ano", "Mes")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FolhaMensal_Usuario_Conta_Ano_Mes");
+
+                    b.ToTable("FolhasMensais");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.Lancamento", b =>
                 {
                     b.Property<int>("Id")
@@ -125,13 +191,27 @@ namespace Bufunfa.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("Ativo")
+                        .HasColumnType("boolean");
+
                     b.Property<int?>("CategoriaId")
                         .HasColumnType("integer");
 
                     b.Property<int>("ContaId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("Data")
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime?>("DataFinal")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicial")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Descricao")
@@ -139,7 +219,7 @@ namespace Bufunfa.Api.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<int?>("ParcelaAtual")
+                    b.Property<int?>("DiaVencimento")
                         .HasColumnType("integer");
 
                     b.Property<int?>("QuantidadeParcelas")
@@ -154,10 +234,10 @@ namespace Bufunfa.Api.Migrations
                     b.Property<int>("UsuarioId")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("Valor")
+                    b.Property<decimal>("ValorProvisionado")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("ValorProvisionado")
+                    b.Property<decimal?>("ValorReal")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
@@ -169,6 +249,74 @@ namespace Bufunfa.Api.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Lancamentos");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.LancamentoFolha", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CategoriaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataPrevista")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataRealizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<int>("FolhaMensalId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LancamentoOrigemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParcelaAtual")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Realizado")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TipoRecorrencia")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TotalParcelas")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ValorProvisionado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ValorReal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("FolhaMensalId");
+
+                    b.HasIndex("LancamentoOrigemId");
+
+                    b.ToTable("LancamentosFolha");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Rateio", b =>
@@ -225,6 +373,89 @@ namespace Bufunfa.Api.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("Bufunfa.Api.Services.GastoRealMercado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Data")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ProvisionamentoMercadoId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Valor")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProvisionamentoMercadoId");
+
+                    b.ToTable("GastosReaisMercado");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Services.ProvisionamentoMercado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CategoriaId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("Mes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ValorGastoReal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ValorProvisionado")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoriaId");
+
+                    b.HasIndex("ContaId");
+
+                    b.HasIndex("UsuarioId", "ContaId", "CategoriaId", "Ano", "Mes")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ProvisionamentoMercado_Usuario_Conta_Categoria_Ano_Mes");
+
+                    b.ToTable("ProvisionamentosMercado");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.Categoria", b =>
                 {
                     b.HasOne("Bufunfa.Api.Models.Usuario", "Usuario")
@@ -258,6 +489,25 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("UsuarioCriador");
                 });
 
+            modelBuilder.Entity("Bufunfa.Api.Models.FolhaMensal", b =>
+                {
+                    b.HasOne("Bufunfa.Api.Models.Conta", "Conta")
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conta");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.Lancamento", b =>
                 {
                     b.HasOne("Bufunfa.Api.Models.Categoria", "Categoria")
@@ -265,7 +515,7 @@ namespace Bufunfa.Api.Migrations
                         .HasForeignKey("CategoriaId");
 
                     b.HasOne("Bufunfa.Api.Models.Conta", "Conta")
-                        .WithMany()
+                        .WithMany("Lancamentos")
                         .HasForeignKey("ContaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -281,6 +531,31 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("Conta");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.LancamentoFolha", b =>
+                {
+                    b.HasOne("Bufunfa.Api.Models.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId");
+
+                    b.HasOne("Bufunfa.Api.Models.FolhaMensal", "FolhaMensal")
+                        .WithMany("LancamentosFolha")
+                        .HasForeignKey("FolhaMensalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Lancamento", "LancamentoOrigem")
+                        .WithMany("LancamentosFolha")
+                        .HasForeignKey("LancamentoOrigemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("FolhaMensal");
+
+                    b.Navigation("LancamentoOrigem");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Rateio", b =>
@@ -302,9 +577,67 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("Usuario");
                 });
 
+            modelBuilder.Entity("Bufunfa.Api.Services.GastoRealMercado", b =>
+                {
+                    b.HasOne("Bufunfa.Api.Services.ProvisionamentoMercado", "ProvisionamentoMercado")
+                        .WithMany("GastosReais")
+                        .HasForeignKey("ProvisionamentoMercadoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProvisionamentoMercado");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Services.ProvisionamentoMercado", b =>
+                {
+                    b.HasOne("Bufunfa.Api.Models.Categoria", "Categoria")
+                        .WithMany()
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Conta", "Conta")
+                        .WithMany()
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Categoria");
+
+                    b.Navigation("Conta");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.Conta", b =>
+                {
+                    b.Navigation("Lancamentos");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.ContaConjunta", b =>
                 {
                     b.Navigation("Rateios");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.FolhaMensal", b =>
+                {
+                    b.Navigation("LancamentosFolha");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.Lancamento", b =>
+                {
+                    b.Navigation("LancamentosFolha");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Services.ProvisionamentoMercado", b =>
+                {
+                    b.Navigation("GastosReais");
                 });
 #pragma warning restore 612, 618
         }
