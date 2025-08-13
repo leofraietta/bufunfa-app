@@ -197,20 +197,21 @@ namespace Bufunfa.Api.Controllers
             var userId = GetUserId();
             var contaCartao = await _context.Contas
                 .Include(c => c.Lancamentos)
-                .FirstOrDefaultAsync(c => c.Id == contaId && c.UsuarioId == userId && c.Tipo == TipoConta.CartaoCredito);
+                .FirstOrDefaultAsync(c => c.Id == contaId && c.UsuarioId == userId && c.Tipo == TipoConta.ContaCartaoCredito);
 
             if (contaCartao == null)
             {
                 return NotFound("Conta de cartão de crédito não encontrada ou não pertence ao usuário.");
             }
 
-            if (!contaCartao.DataFechamento.HasValue || !contaCartao.DataVencimento.HasValue)
+            var cartaoCredito = contaCartao as ContaCartaoCredito;
+            if (cartaoCredito == null)
             {
-                return BadRequest("Datas de fechamento e vencimento do cartão não configuradas.");
+                return BadRequest("Não foi possível fazer cast para ContaCartaoCredito.");
             }
 
             // Verifica se a fatura já foi fechada para o mês atual
-            if (DateTime.Now.Date >= contaCartao.DataFechamento.Value.Date)
+            if (cartaoCredito.DataAposFechamento(DateTime.Now))
             {
                 // Calcula o total da fatura para o período
                 var totalFatura = contaCartao.Lancamentos
@@ -218,7 +219,7 @@ namespace Bufunfa.Api.Controllers
                     .Sum(l => l.Valor);
 
                 // Cria um lançamento de despesa na conta principal do usuário
-                var contaPrincipal = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == userId && c.Tipo == TipoConta.Principal);
+                var contaPrincipal = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == userId && c.Tipo == TipoConta.ContaCorrente);
 
                 if (contaPrincipal == null)
                 {
@@ -229,7 +230,7 @@ namespace Bufunfa.Api.Controllers
                 {
                     Descricao = $"Fatura Cartão {contaCartao.Nome} - {DateTime.Now.ToString("MM/yyyy")}",
                     ValorProvisionado = totalFatura,
-                    DataInicial = contaCartao.DataVencimento.Value, // Data de vencimento da fatura
+                    DataInicial = cartaoCredito.CalcularDataVencimento(DateTime.Now.Year, DateTime.Now.Month), // Data de vencimento da fatura
                     Tipo = TipoLancamento.Despesa,
                     TipoRecorrencia = TipoRecorrencia.Esporadico,
                     ContaId = contaPrincipal.Id,

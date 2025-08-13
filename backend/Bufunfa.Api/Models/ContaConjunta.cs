@@ -3,31 +3,177 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Bufunfa.Api.Models
 {
-    public class ContaConjunta
+    /// <summary>
+    /// Conta Conjunta - compartilhada entre múltiplos usuários com rateio configurável
+    /// Herda de Conta e implementa lógicas específicas de rateio e apuração
+    /// </summary>
+    public class ContaConjunta : Conta
     {
-        [Key]
-        public int Id { get; set; }
+        public ContaConjunta()
+        {
+            Tipo = TipoConta.ContaConjunta;
+        }
 
+        /// <summary>
+        /// Data de apuração mensal da conta conjunta
+        /// </summary>
         [Required]
-        [MaxLength(255)]
-        public string Nome { get; set; }
+        public int DiaApuracao { get; set; } = 1;
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal SaldoAtual { get; set; }
-
-        [Required]
-        public DateTime DataApuracao { get; set; }
-
-        // Configuração para saldo positivo
+        /// <summary>
+        /// Configuração para saldo positivo:
+        /// true = manter saldo na conta conjunta
+        /// false = distribuir como receita nas contas principais
+        /// </summary>
         public bool ManterSaldoPositivo { get; set; } = true;
 
-        // Chave estrangeira para o usuário criador
-        [Required]
-        public int UsuarioCriadorId { get; set; }
-        public Usuario UsuarioCriador { get; set; }
+        /// <summary>
+        /// Indica se a conta está em processo de apuração
+        /// </summary>
+        public bool EmApuracao { get; set; } = false;
 
-        // Relacionamento com rateios
-        public ICollection<Rateio> Rateios { get; set; } = new List<Rateio>();
+        /// <summary>
+        /// Data da última apuração realizada
+        /// </summary>
+        public DateTime? DataUltimaApuracao { get; set; }
+
+        /// <summary>
+        /// Valor da última apuração
+        /// </summary>
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? ValorUltimaApuracao { get; set; }
+
+        /// <summary>
+        /// Calcula o rateio do saldo entre os usuários participantes
+        /// </summary>
+        public Dictionary<int, decimal> CalcularRateioSaldo()
+        {
+            var rateio = new Dictionary<int, decimal>();
+            var participantes = ContaUsuarios.Where(cu => cu.Ativo).ToList();
+            
+            if (!participantes.Any())
+                return rateio;
+
+            foreach (var participante in participantes)
+            {
+                var valorRateado = SaldoAtual * (participante.PercentualParticipacao / 100);
+                rateio[participante.UsuarioId] = valorRateado;
+            }
+
+            return rateio;
+        }
+
+        /// <summary>
+        /// Verifica se todos os percentuais de participação somam 100%
+        /// </summary>
+        public bool ValidarPercentuaisRateio()
+        {
+            var totalPercentual = ContaUsuarios
+                .Where(cu => cu.Ativo)
+                .Sum(cu => cu.PercentualParticipacao);
+            
+            return Math.Abs(totalPercentual - 100) < 0.01m; // Tolerância para arredondamento
+        }
+
+        /// <summary>
+        /// Calcula a data de apuração para um determinado mês/ano
+        /// </summary>
+        public DateTime CalcularDataApuracao(int ano, int mes)
+        {
+            var dataApuracao = new DateTime(ano, mes, DiaApuracao);
+            
+            // Se o dia de apuração é maior que o último dia do mês, usa o último dia
+            if (DiaApuracao > DateTime.DaysInMonth(ano, mes))
+            {
+                dataApuracao = new DateTime(ano, mes, DateTime.DaysInMonth(ano, mes));
+            }
+
+            return dataApuracao;
+        }
+
+        /// <summary>
+        /// Verifica se pode receber lançamento considerando regras da conta conjunta
+        /// </summary>
+        public override bool PodeReceberLancamento(Lancamento lancamento)
+        {
+            if (!base.PodeReceberLancamento(lancamento))
+                return false;
+
+            // Verifica se a conta não está em processo de apuração
+            if (EmApuracao)
+                return false;
+
+            // Verifica se os percentuais de rateio estão válidos
+            if (!ValidarPercentuaisRateio())
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Processa a apuração mensal da conta conjunta
+        /// </summary>
+        public ApuracaoResult ProcessarApuracao(int ano, int mes)
+        {
+            var result = new ApuracaoResult
+            {
+                Ano = ano,
+                Mes = mes,
+                DataApuracao = CalcularDataApuracao(ano, mes),
+                SaldoApurado = SaldoAtual,
+                Rateios = CalcularRateioSaldo()
+            };
+
+            // Marca como em apuração
+            EmApuracao = true;
+            DataUltimaApuracao = DateTime.UtcNow;
+            ValorUltimaApuracao = SaldoAtual;
+
+            return result;
+        }
+
+        // Propriedades para compatibilidade com código existente
+        
+        /// <summary>
+        /// ID do usuário criador da conta (para compatibilidade)
+        /// </summary>
+        [NotMapped]
+        public int? UsuarioCriadorId => ContaUsuarios?.FirstOrDefault(cu => cu.EhProprietario && cu.Ativo)?.UsuarioId;
+
+        /// <summary>
+        /// Usuário criador da conta (para compatibilidade)
+        /// </summary>
+        [NotMapped]
+        public Usuario? UsuarioCriador => ContaUsuarios?.FirstOrDefault(cu => cu.EhProprietario && cu.Ativo)?.Usuario;
+
+        /// <summary>
+        /// Simulação da propriedade Rateios para compatibilidade com código existente
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<RateioCompatibilidade> Rateios => 
+            ContaUsuarios?.Where(cu => cu.Ativo)
+                         .Select(cu => new RateioCompatibilidade
+                         {
+                             Id = cu.Id,
+                             PercentualRateio = cu.PercentualParticipacao,
+                             UsuarioId = cu.UsuarioId,
+                             Usuario = cu.Usuario,
+                             ContaConjuntaId = Id,
+                             ContaConjunta = this
+                         }) ?? Enumerable.Empty<RateioCompatibilidade>();
+    }
+
+    /// <summary>
+    /// Resultado do processo de apuração da conta conjunta
+    /// </summary>
+    public class ApuracaoResult
+    {
+        public int Ano { get; set; }
+        public int Mes { get; set; }
+        public DateTime DataApuracao { get; set; }
+        public decimal SaldoApurado { get; set; }
+        public Dictionary<int, decimal> Rateios { get; set; } = new Dictionary<int, decimal>();
+        public bool SaldoPositivo => SaldoApurado > 0;
+        public bool SaldoNegativo => SaldoApurado < 0;
     }
 }
-

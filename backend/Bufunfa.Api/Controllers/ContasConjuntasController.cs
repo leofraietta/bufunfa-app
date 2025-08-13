@@ -64,19 +64,24 @@ namespace Bufunfa.Api.Controllers
         public async Task<ActionResult<ContaConjunta>> PostContaConjunta(ContaConjunta contaConjunta)
         {
             var userId = GetUserId();
-            contaConjunta.UsuarioCriadorId = userId;
             contaConjunta.SaldoAtual = 0; // Saldo inicial sempre zero
 
             _context.ContasConjuntas.Add(contaConjunta);
             await _context.SaveChangesAsync();
 
-            // Adiciona o usuário criador como um rateio inicial de 100% (pode ser ajustado depois)
-            _context.Rateios.Add(new Rateio
+            // Criar relacionamento ContaUsuario como proprietário/criador com 100% de participação
+            var contaUsuario = new ContaUsuario
             {
-                ContaConjuntaId = contaConjunta.Id,
+                ContaId = contaConjunta.Id,
                 UsuarioId = userId,
-                PercentualRateio = 100.00m
-            });
+                EhProprietario = true,
+                PercentualParticipacao = 100.00m,
+                PodeLer = true,
+                PodeEscrever = true,
+                PodeAdministrar = true
+            };
+            
+            _context.ContaUsuarios.Add(contaUsuario);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetContaConjunta", new { id = contaConjunta.Id }, contaConjunta);
@@ -219,8 +224,9 @@ namespace Bufunfa.Api.Controllers
             }
 
             // Calcula o saldo total dos lançamentos da conta conjunta desde a última apuração
+            var dataUltimaApuracao = contaConjunta.DataUltimaApuracao ?? DateTime.MinValue;
             var lancamentosContaConjunta = await _context.Lancamentos
-                .Where(l => l.ContaId == contaConjunta.Id && l.Data >= contaConjunta.DataApuracao)
+                .Where(l => l.ContaId == contaConjunta.Id && l.Data >= dataUltimaApuracao)
                 .ToListAsync();
 
             var totalReceitas = lancamentosContaConjunta.Where(l => l.Tipo == TipoLancamento.Receita).Sum(l => l.Valor);
@@ -233,7 +239,7 @@ namespace Bufunfa.Api.Controllers
                 foreach (var rateio in contaConjunta.Rateios)
                 {
                     var valorRateado = Math.Abs(saldoApurado) * (rateio.PercentualRateio / 100);
-                    var contaPrincipalUsuario = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == rateio.UsuarioId && c.Tipo == TipoConta.Principal);
+                    var contaPrincipalUsuario = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == rateio.UsuarioId && c.Tipo == TipoConta.ContaCorrente);
 
                     if (contaPrincipalUsuario != null)
                     {
@@ -261,7 +267,7 @@ namespace Bufunfa.Api.Controllers
                     foreach (var rateio in contaConjunta.Rateios)
                     {
                         var valorRateado = saldoApurado * (rateio.PercentualRateio / 100);
-                        var contaPrincipalUsuario = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == rateio.UsuarioId && c.Tipo == TipoConta.Principal);
+                        var contaPrincipalUsuario = await _context.Contas.FirstOrDefaultAsync(c => c.UsuarioId == rateio.UsuarioId && c.Tipo == TipoConta.ContaCorrente);
 
                         if (contaPrincipalUsuario != null)
                         {
@@ -288,7 +294,7 @@ namespace Bufunfa.Api.Controllers
                 }
             }
 
-            contaConjunta.DataApuracao = DateTime.Now; // Atualiza a data da última apuração
+            contaConjunta.DataUltimaApuracao = DateTime.Now; // Atualiza a data da última apuração
             _context.Entry(contaConjunta).State = EntityState.Modified;
 
             await _context.SaveChangesAsync();

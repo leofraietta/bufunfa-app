@@ -12,9 +12,14 @@ namespace Bufunfa.Api.Data
 
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Conta> Contas { get; set; }
+        public DbSet<ContaCorrente> ContasCorrente { get; set; }
+        public DbSet<ContaCartaoCredito> ContasCartaoCredito { get; set; }
+        public DbSet<ContaConjunta> ContasConjuntas { get; set; }
+        public DbSet<ContaPoupanca> ContasPoupanca { get; set; }
+        public DbSet<ContaInvestimento> ContasInvestimento { get; set; }
+        public DbSet<ContaUsuario> ContaUsuarios { get; set; }
         public DbSet<Lancamento> Lancamentos { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
-        public DbSet<ContaConjunta> ContasConjuntas { get; set; }
         public DbSet<Rateio> Rateios { get; set; }
         public DbSet<FolhaMensal> FolhasMensais { get; set; }
         public DbSet<LancamentoFolha> LancamentosFolha { get; set; }
@@ -24,6 +29,67 @@ namespace Bufunfa.Api.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configuração de herança TPH (Table Per Hierarchy) para Conta
+            modelBuilder.Entity<Conta>()
+                .HasDiscriminator<TipoConta>("Tipo")
+                .HasValue<ContaCorrente>(TipoConta.ContaCorrente)
+                .HasValue<ContaCartaoCredito>(TipoConta.ContaCartaoCredito)
+                .HasValue<ContaConjunta>(TipoConta.ContaConjunta)
+                .HasValue<ContaPoupanca>(TipoConta.ContaPoupanca)
+                .HasValue<ContaInvestimento>(TipoConta.ContaInvestimento);
+
+            // Configurações para ContaUsuario (relacionamento many-to-many)
+            modelBuilder.Entity<ContaUsuario>()
+                .HasIndex(cu => new { cu.ContaId, cu.UsuarioId })
+                .IsUnique()
+                .HasDatabaseName("IX_ContaUsuario_Conta_Usuario");
+
+            modelBuilder.Entity<ContaUsuario>()
+                .HasOne(cu => cu.Conta)
+                .WithMany(c => c.ContaUsuarios)
+                .HasForeignKey(cu => cu.ContaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ContaUsuario>()
+                .HasOne(cu => cu.Usuario)
+                .WithMany(u => u.ContaUsuarios)
+                .HasForeignKey(cu => cu.UsuarioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configurações específicas para ContaCartaoCredito
+            modelBuilder.Entity<ContaCartaoCredito>()
+                .HasOne(cc => cc.ContaCorrenteResponsavel)
+                .WithMany(cr => cr.CartoesCredito)
+                .HasForeignKey(cc => cc.ContaCorrenteResponsavelId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configurações para campos decimais
+            modelBuilder.Entity<Conta>()
+                .Property(c => c.SaldoInicial)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Conta>()
+                .Property(c => c.SaldoAtual)
+                .HasColumnType("decimal(18,2)");
+
+            // Configurações para ContaUsuario
+            modelBuilder.Entity<ContaUsuario>()
+                .Property(cu => cu.PercentualParticipacao)
+                .HasColumnType("decimal(5,2)");
+
+            // Configurações de timestamps
+            modelBuilder.Entity<Conta>()
+                .Property(c => c.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            modelBuilder.Entity<ContaUsuario>()
+                .Property(cu => cu.DataVinculacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             // Configurações para FolhaMensal
             modelBuilder.Entity<FolhaMensal>()

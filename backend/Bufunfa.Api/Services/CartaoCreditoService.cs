@@ -28,19 +28,20 @@ namespace Bufunfa.Api.Services
         {
             var conta = await _context.Contas.FindAsync(contaId);
             
-            if (conta == null || conta.Tipo != TipoConta.CartaoCredito)
+            if (conta == null || conta.Tipo != TipoConta.ContaCartaoCredito)
             {
                 return true; // Não é cartão de crédito, pode adicionar
             }
 
-            if (!conta.DataFechamento.HasValue)
+            var cartaoCredito = conta as ContaCartaoCredito;
+            if (cartaoCredito == null)
             {
-                return true; // Cartão sem data de fechamento configurada
+                return true; // Não conseguiu fazer cast para cartão de crédito
             }
 
             // Verificar se a fatura do mês do lançamento já foi fechada
             var anoMes = new DateTime(dataLancamento.Year, dataLancamento.Month, 1);
-            var dataFechamentoMes = new DateTime(dataLancamento.Year, dataLancamento.Month, conta.DataFechamento.Value.Day);
+            var dataFechamentoMes = new DateTime(dataLancamento.Year, dataLancamento.Month, cartaoCredito.DiaFechamento);
             
             // Se a data de fechamento já passou no mês do lançamento, não pode adicionar
             return DateTime.Now <= dataFechamentoMes;
@@ -50,7 +51,7 @@ namespace Bufunfa.Api.Services
         {
             var conta = await _context.Contas.FindAsync(contaId);
             
-            if (conta == null || conta.Tipo != TipoConta.CartaoCredito)
+            if (conta == null || conta.Tipo != TipoConta.ContaCartaoCredito)
             {
                 throw new InvalidOperationException("Conta não é um cartão de crédito");
             }
@@ -73,12 +74,18 @@ namespace Bufunfa.Api.Services
             var conta = await _context.Contas.FindAsync(contaId);
             var contaPrincipal = await _context.Contas.FindAsync(contaPrincipalId);
             
-            if (conta == null || conta.Tipo != TipoConta.CartaoCredito)
+            if (conta == null || conta.Tipo != TipoConta.ContaCartaoCredito)
             {
                 throw new InvalidOperationException("Conta não é um cartão de crédito");
             }
 
-            if (contaPrincipal == null || contaPrincipal.Tipo != TipoConta.Principal)
+            var cartaoCredito = conta as ContaCartaoCredito;
+            if (cartaoCredito == null)
+            {
+                throw new InvalidOperationException("Não foi possível fazer cast para ContaCartaoCredito");
+            }
+
+            if (contaPrincipal == null || contaPrincipal.Tipo != TipoConta.ContaCorrente)
             {
                 throw new InvalidOperationException("Conta principal inválida");
             }
@@ -92,8 +99,7 @@ namespace Bufunfa.Api.Services
             }
 
             // Criar lançamento de consolidação na conta principal
-            var dataVencimento = conta.DataVencimento ?? DateTime.Now;
-            var dataConsolidacao = new DateTime(ano, mes, dataVencimento.Day);
+            var dataConsolidacao = cartaoCredito.CalcularDataVencimento(ano, mes);
             
             // Se a data de vencimento já passou no mês, usar o próximo mês
             if (dataConsolidacao < DateTime.Now.Date)
@@ -110,7 +116,7 @@ namespace Bufunfa.Api.Services
                 Tipo = TipoLancamento.Despesa,
                 TipoRecorrencia = TipoRecorrencia.Esporadico,
                 ContaId = contaPrincipalId,
-                UsuarioId = conta.UsuarioId,
+                UsuarioId = conta.UsuarioId ?? throw new InvalidOperationException("Conta sem usuário proprietário"),
                 DataCriacao = DateTime.UtcNow,
                 Ativo = true
             };
@@ -119,8 +125,9 @@ namespace Bufunfa.Api.Services
             await _context.SaveChangesAsync();
 
             // Atualizar folha mensal da conta principal se necessário
+            var usuarioId = conta.UsuarioId ?? throw new InvalidOperationException("Conta sem usuário proprietário");
             var folhaPrincipal = await _folhaMensalService.ObterFolhaMensalAsync(
-                conta.UsuarioId, 
+                usuarioId, 
                 contaPrincipalId, 
                 dataConsolidacao.Year, 
                 dataConsolidacao.Month
@@ -148,12 +155,18 @@ namespace Bufunfa.Api.Services
         {
             var conta = await _context.Contas.FindAsync(contaId);
             
-            if (conta == null || conta.Tipo != TipoConta.CartaoCredito || !conta.DataFechamento.HasValue)
+            if (conta == null || conta.Tipo != TipoConta.ContaCartaoCredito)
             {
                 return false;
             }
 
-            var dataFechamento = new DateTime(ano, mes, conta.DataFechamento.Value.Day);
+            var cartaoCredito = conta as ContaCartaoCredito;
+            if (cartaoCredito == null)
+            {
+                return false;
+            }
+
+            var dataFechamento = new DateTime(ano, mes, cartaoCredito.DiaFechamento);
             return DateTime.Now > dataFechamento;
         }
 
@@ -161,15 +174,15 @@ namespace Bufunfa.Api.Services
         {
             // Buscar cartões com data de vencimento
             var cartoesComVencimento = await _context.Contas
-                .Where(c => c.Tipo == TipoConta.CartaoCredito && 
-                           c.DataVencimento.HasValue)
+                .Where(c => c.Tipo == TipoConta.ContaCartaoCredito)
+                .OfType<ContaCartaoCredito>()
                 .ToListAsync();
 
             foreach (var cartao in cartoesComVencimento)
             {
                 // Verificar se há faturas para consolidar
                 var hoje = DateTime.Now.Date;
-                var diaVencimento = cartao.DataVencimento.Value.Day;
+                var diaVencimento = cartao.DiaVencimento;
                 
                 // Verificar mês atual e anterior
                 for (int i = 0; i <= 1; i++)
@@ -187,7 +200,7 @@ namespace Bufunfa.Api.Services
                         {
                             // Buscar conta principal do mesmo usuário
                             var contaPrincipal = await _context.Contas
-                                .FirstOrDefaultAsync(c => c.UsuarioId == cartao.UsuarioId && c.Tipo == TipoConta.Principal);
+                                .FirstOrDefaultAsync(c => c.UsuarioId == cartao.UsuarioId && c.Tipo == TipoConta.ContaCorrente);
                             
                             if (contaPrincipal != null)
                             {

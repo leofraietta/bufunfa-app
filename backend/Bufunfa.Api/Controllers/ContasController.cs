@@ -57,9 +57,24 @@ namespace Bufunfa.Api.Controllers
         public async Task<ActionResult<Conta>> PostConta(Conta conta)
         {
             var userId = GetUserId();
-            conta.UsuarioId = userId;
-
+            
+            // Adicionar a conta
             _context.Contas.Add(conta);
+            await _context.SaveChangesAsync();
+            
+            // Criar relacionamento ContaUsuario como proprietário
+            var contaUsuario = new ContaUsuario
+            {
+                ContaId = conta.Id,
+                UsuarioId = userId,
+                EhProprietario = true,
+                PercentualParticipacao = 100.00m,
+                PodeLer = true,
+                PodeEscrever = true,
+                PodeAdministrar = true
+            };
+            
+            _context.ContaUsuarios.Add(contaUsuario);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetConta", new { id = conta.Id }, conta);

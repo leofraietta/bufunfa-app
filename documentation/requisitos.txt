@@ -1,0 +1,124 @@
+
+
+
+Objetivo Principal: Construir um aplicativo de controle financeiro pessoal chamado "Bufunfa". A primeira fase será uma aplicação Web, com planos para uma versão móvel no futuro. O aplicativo deve permitir que os usuários gerenciem suas finanças pessoais e conjuntas de forma intuitiva e detalhada.
+Agentes Especialistas e Suas Responsabilidades:
+Você atuará como uma equipe de especialistas virtuais. A seguir, a definição de cada agente e suas responsabilidades:
+Agente Gerente de Produto:
+Você é responsável por traduzir os requisitos de negócio em funcionalidades claras e épicos de desenvolvimento.
+Você definirá o fluxo do usuário, as regras de negócio e priorizará o backlog de funcionalidades, garantindo que o produto final atenda às necessidades descritas.
+Você deve garantir que a lógica de provisionamento, rateio e consolidação de faturas seja implementada conforme especificado.
+Agente Arquiteto de Soluções:
+Você definirá a arquitetura geral da solução, garantindo escalabilidade, segurança e manutenibilidade.
+Sua responsabilidade é garantir que o backend, o frontend e o banco de dados se comuniquem de forma eficiente e segura.
+Você supervisionará as escolhas tecnológicas e a estrutura do projeto, incluindo a preparação para funcionalidades futuras como relatórios e importação de dados.
+Agente Engenheiro de Backend (.NET):
+Você desenvolverá uma API RESTful robusta utilizando .NET 8 (ou a versão estável mais recente).
+Implementará toda a lógica de negócio, incluindo:
+Autenticação de usuários via Google OAuth2.
+CRUD (Criar, Ler, Atualizar, Deletar) para contas, lançamentos (despesas/receitas), e categorias.
+Lógica para despesas recorrentes, parceladas e esporádicas.
+Mecanismo de provisionamento e atualização de valores.
+Consolidação de faturas de cartão de crédito.
+Gestão de contas conjuntas e o cálculo de rateio de saldos.
+Utilizará o Entity Framework Core como ORM para interagir com o banco de dados.
+Agente Engenheiro de Frontend (Angular):
+Você desenvolverá uma interface de usuário (UI) moderna, responsiva e intuitiva utilizando Angular (versão estável mais recente) e TypeScript.
+Implementará os seguintes componentes e telas:
+Tela de login com integração Google.
+Dashboard principal exibindo o saldo consolidado, resumo do mês e próximos vencimentos.
+Telas para gerenciamento de contas (principais, cartões de crédito, conjuntas).
+Formulários para cadastro de lançamentos (despesas e receitas) com todas as suas variações (recorrente, parcelada, etc.).
+Visualização de extrato por conta, com filtros por período.
+Interface para gerenciar contas conjuntas e configurar os percentuais de rateio.
+Você consumirá a API .NET para todas as operações de dados.
+Agente Administrador de Banco de Dados (DBA):
+Você projetará e implementará o esquema do banco de dados utilizando PostgreSQL.
+O modelo de dados deve suportar todas as entidades e seus relacionamentos: Usuários, Contas, Lançamentos, Categorias, ContasConjuntas, Rateios, etc.
+Você criará os scripts de migração (usando Entity Framework Core Migrations) e garantirá que as consultas sejam otimizadas para performance.
+Requisitos Técnicos e de Arquitetura:
+Backend: .NET 8, API RESTful, Entity Framework Core.
+Frontend: Angular, TypeScript, HTML5, CSS (utilizar um framework como Angular Material ou Bootstrap para agilizar).
+Banco de Dados: PostgreSQL.
+Autenticação: Login social com Google (OAuth2).
+Estrutura do Projeto: Siga as melhores práticas para organização de projetos .NET (ex: Clean Architecture) e Angular (módulos, componentes, serviços). Utilize o código-base inicial do repositório GitHub como referência, mas sinta-se livre para refatorar e melhorar a estrutura.
+Detalhamento das Funcionalidades (MVP - Mínimo Produto Viável):
+1. Gestão de Usuário:
+*   Cadastro e login exclusivamente via conta Google.
+*   O único dado de perfil necessário inicialmente é o nome do usuário.
+2. Gestão de Contas:
+*   O usuário pode cadastrar múltiplas contas. Tipos de conta: "Conta Corrente/Principal" e "Cartão de Crédito".
+*   Conta Principal: Possui um saldo inicial.
+*   Cartão de Crédito: Possui campos para "Data de Fechamento" e "Data de Vencimento". Lançamentos não podem ser adicionados a um mês de fatura após a data de fechamento. O saldo total da fatura fechada deve ser lançado como uma única despesa na conta principal do usuário na data de vencimento.
+3. Gestão de Lançamentos:
+*   Receitas: Podem ser recorrentes (ex: Salário) ou esporádicas.
+*   Despesas:
+*   Recorrentes: Valor provisionado que se repete mensalmente (ex: Aluguel, Energia). O usuário pode editar o valor real do mês corrente sem alterar o provisionamento dos meses futuros. Apenas o valor final importa para o cálculo do saldo.
+*   Parceladas: Uma despesa com valor fixo que se repete por um número definido de meses (ex: "Compra Notebook - 3/12").
+*   Esporádicas: Ocorrem uma única vez.
+*   Provisionamento de "Mercado": Funciona como uma despesa recorrente com valor provisionado. O usuário lança despesas esporádicas categorizadas como "Mercado", e o sistema deve mostrar o total gasto real versus o provisionado para o mês. O valor que impacta o saldo final é o gasto real.
+4. Contas Conjuntas e Rateio:
+*   Um usuário pode convidar outro usuário (via email associado à conta Google) para compartilhar uma conta.
+*   Ao criar/editar a conta conjunta, os usuários definem o percentual de rateio (ex: 60% para o usuário A, 40% para o usuário B).
+*   Ambos os usuários podem visualizar o extrato e adicionar lançamentos à conta conjunta.
+*   A conta conjunta terá uma "data de apuração" mensal.
+*   Na data de apuração:
+*   Se o saldo for negativo (devedor), um lançamento de despesa será criado automaticamente na conta principal de cada usuário, respeitando o percentual de rateio.
+*   Se o saldo for positivo (credor), os usuários podem pré-configurar a conta para:
+1.  Manter o saldo na conta conjunta para o próximo mês.
+2.  Distribuir o valor como uma receita na conta principal de cada usuário, respeitando o percentual de rateio.
+5. Visão Geral e Dashboard:
+*   A tela inicial deve apresentar um resumo do saldo de todas as contas.
+*   Deve mostrar uma projeção do saldo para o final do mês corrente e para os meses futuros, considerando todos os lançamentos provisionados e recorrentes.
+Plano de Ação Sugerido:
+Setup do Projeto: Crie a estrutura dos projetos (solução .NET e workspace Angular) e configure o repositório Git.
+Modelagem do BD: Projete o esquema do PostgreSQL e configure as migrações iniciais com o EF Core.
+Backend (API):
+Implemente a autenticação com Google.
+Crie os endpoints CRUD para Contas e Lançamentos (simples, sem lógicas complexas inicialmente).
+Implemente as lógicas de negócio: recorrência, parcelamento, consolidação de fatura e rateio.
+Frontend (UI):
+Desenvolva os componentes de UI (telas, formulários, etc.).
+Integre com a API para exibir e manipular os dados.
+Foque em um fluxo de usuário limpo e funcional.
+Foco em Funcionalidades Futuras:
+A arquitetura deve ser pensada para facilitar a implementação futura de:
+Relatórios e gráficos de despesas por categoria.
+Definição de metas financeiras.
+Importação de extratos bancários (OFX/PDF).
+
+Refinamento de requisitos
+
+	Um lançamento pode ser do tipo 
+		
+	Despesa Esporádica - Tem um lançamento pontual no mês corrente em uma data unica e não se propaga nos meses subsequentes. Tem um valor provisionado e um valor real que é debitado da conta na data especificada. O valor é debitado do saldo quando a despesa for realizada.
+
+	Despesa Recorrente - Tem lançamentos recorrentes na mesma data para os próximos meses, por exemplo, todo dia 5 do mês.Tem um valor provisionado e um valor real que é debitado da conta na data especificada do mes. O valor é debitado do saldo quando a despesa for realizada. 
+
+	Receitas Esporádica - Tem um lançamento pontual no mês corrente em uma data unica e não se propaga nos meses subsequentes.Tem um valor provisionado e um valor real que é creditado da conta na data especificada. O valor é creditado no saldo quando a receita for realizada.
+
+	Receitas Recorrente - Tem lançamentos recorrentes na mesma data para os próximos meses, por exemplo, todo dia 5 do mês. Tem um valor provisionado e um valor real que é creditado da conta na data especificada do mes. O valor é creditado no saldo quando a receita for realizada.
+	
+	Despesas parceladas - Tem lançamentos conforme forem o número de parcelas, ela possui uma data inicial, potanto ela tem
+	lancamentos recorrentes nos N mêses os quais forem as quantidades de suas parcelas. Geralmente o valor provisionado é igual ao valor real, o valor real pode aumentar caso o usuário pague a parcela com atraso ou multa. O valor é debitado do saldo quando a despesa for realizada.
+	
+	Receitas parceladas - Tem lançamentos conforme forem o número de parcelas, ela possui uma data inicial, potanto ela tem lancamentos recorrentes nos N mêses os quais forem as quantidades de suas parcelas. Geralmente o valor provisionado é igual ao valor real, o valor real pode aumentar caso o usuário receba a parcela com atraso ou multa. O valor é creditado no saldo quando a receita for realizada.
+
+Os usuário farão o controle financeiro mês a mês, portando quando uma folha de mês é a berta, todos os lançamentos devem ser listados nesse mês. Ex. Vamos abrir a folha de controle do mes Agosto de 2025. 
+	- O Saldo do mês da conta principal inicia-se com o saldo do fechamento do mês anterior.
+	- Todas as despesas recorrentes devem ser cadastradas/listadas nesse novo mês.
+	- Todas as receitas recorrentes devem ser cadastradas/listadas nesse novo mês. 
+	- Todas as despesas parceladas devem ser cadastradas/listadas nesse novo mês caso suas parcelas ainda prevalecam para o mes atual.
+	- Todas as receitas recorrentes devem ser cadastradas/listadas nesse novo mês caso suas parcelas ainda prevalecam para o mes atual.
+	
+A folha de mes também tem um valor de saldo real e um valor de saldo provisionado, ou seja, o valor de saldo provisionado é a soma de todas as receitas do mês menos todas as despesas do mês e assim como os valores provisionados, o saldo real é a soma de todas as receitas  realizadas menos todas as despesas realizadas.
+
+o usuário podera abrir os mêses futuros para ver o como estará o provisionamento de suas receitas e despesas, deve se considerar que o saldo de um determinado mês inicia-se com o saldo do mês anterior
+	
+
+	
+	
+		
+		
+		
+			
