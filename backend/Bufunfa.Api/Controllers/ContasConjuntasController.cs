@@ -243,13 +243,12 @@ namespace Bufunfa.Api.Controllers
 
                     if (contaPrincipalUsuario != null)
                     {
-                        _context.Lancamentos.Add(new Lancamento
+                        _context.Lancamentos.Add(new LancamentoEsporadico
                         {
                             Descricao = $"Rateio Despesa Conta Conjunta {contaConjunta.Nome}",
                             ValorProvisionado = valorRateado,
                             DataInicial = DateTime.Now,
                             Tipo = TipoLancamento.Despesa,
-                            TipoRecorrencia = TipoRecorrencia.Esporadico,
                             ContaId = contaPrincipalUsuario.Id,
                             UsuarioId = rateio.UsuarioId,
                             DataCriacao = DateTime.Now,
@@ -271,13 +270,12 @@ namespace Bufunfa.Api.Controllers
 
                         if (contaPrincipalUsuario != null)
                         {
-                            _context.Lancamentos.Add(new Lancamento
+                            _context.Lancamentos.Add(new LancamentoEsporadico
                             {
                                 Descricao = $"Rateio Receita Conta Conjunta {contaConjunta.Nome}",
                                 ValorProvisionado = valorRateado,
                                 DataInicial = DateTime.Now,
                                 Tipo = TipoLancamento.Receita,
-                                TipoRecorrencia = TipoRecorrencia.Esporadico,
                                 ContaId = contaPrincipalUsuario.Id,
                                 UsuarioId = rateio.UsuarioId,
                                 DataCriacao = DateTime.Now,

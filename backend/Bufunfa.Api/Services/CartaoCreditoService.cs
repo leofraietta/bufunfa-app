@@ -107,14 +107,13 @@ namespace Bufunfa.Api.Services
                 dataConsolidacao = dataConsolidacao.AddMonths(1);
             }
 
-            var lancamentoConsolidacao = new Lancamento
+            var lancamentoConsolidacao = new LancamentoEsporadico
             {
                 Descricao = $"Fatura {conta.Nome} - {mes:D2}/{ano}",
                 ValorProvisionado = totalFatura,
                 ValorReal = totalFatura,
                 DataInicial = dataConsolidacao,
                 Tipo = TipoLancamento.Despesa,
-                TipoRecorrencia = TipoRecorrencia.Esporadico,
                 ContaId = contaPrincipalId,
                 UsuarioId = conta.UsuarioId ?? throw new InvalidOperationException("Conta sem usuário proprietário"),
                 DataCriacao = DateTime.UtcNow,

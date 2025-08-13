@@ -93,23 +93,26 @@ namespace Bufunfa.Api.Controllers
                     {
                         return BadRequest("Quantidade de parcelas é obrigatória para lançamentos parcelados.");
                     }
-                    for (int i = 0; i < lancamento.QuantidadeParcelas.Value; i++)
+                    // Para lançamentos parcelados, criar um único lançamento parcelado
+                    var lancamentoParcelado = new LancamentoParcelado
                     {
-                        _context.Lancamentos.Add(new Lancamento
-                        {
-                            Descricao = $"{lancamento.Descricao} ({i + 1}/{lancamento.QuantidadeParcelas.Value})",
-                            ValorProvisionado = lancamento.ValorProvisionado,
-                            DataInicial = lancamento.DataInicial.AddMonths(i),
-                            Tipo = lancamento.Tipo,
-                            TipoRecorrencia = lancamento.TipoRecorrencia,
-                            QuantidadeParcelas = lancamento.QuantidadeParcelas,
-                            ContaId = lancamento.ContaId,
-                            CategoriaId = lancamento.CategoriaId,
-                            UsuarioId = userId,
-                            DataCriacao = DateTime.Now,
-                            Ativo = true
-                        });
-                    }
+                        Descricao = lancamento.Descricao,
+                        ValorProvisionado = lancamento.ValorProvisionado,
+                        DataInicial = lancamento.DataInicial,
+                        Tipo = lancamento.Tipo,
+                        QuantidadeParcelas = lancamento.QuantidadeParcelas.Value,
+                        DiaVencimento = lancamento.DataInicial.Day,
+                        ContaId = lancamento.ContaId,
+                        CategoriaId = lancamento.CategoriaId,
+                        UsuarioId = userId,
+                        DataCriacao = DateTime.Now,
+                        Ativo = true
+                    };
+                    
+                    // Calcular data final automaticamente
+                    lancamentoParcelado.CalcularDataFinal();
+                    
+                    _context.Lancamentos.Add(lancamentoParcelado);
                 }
                 else if (lancamento.TipoRecorrencia == TipoRecorrencia.Recorrente)
                 {
@@ -226,13 +229,12 @@ namespace Bufunfa.Api.Controllers
                     return BadRequest("Conta principal do usuário não encontrada.");
                 }
 
-                _context.Lancamentos.Add(new Lancamento
+                _context.Lancamentos.Add(new LancamentoEsporadico
                 {
                     Descricao = $"Fatura Cartão {contaCartao.Nome} - {DateTime.Now.ToString("MM/yyyy")}",
                     ValorProvisionado = totalFatura,
                     DataInicial = cartaoCredito.CalcularDataVencimento(DateTime.Now.Year, DateTime.Now.Month), // Data de vencimento da fatura
                     Tipo = TipoLancamento.Despesa,
-                    TipoRecorrencia = TipoRecorrencia.Esporadico,
                     ContaId = contaPrincipal.Id,
                     UsuarioId = userId,
                     DataCriacao = DateTime.Now,

@@ -19,6 +19,10 @@ namespace Bufunfa.Api.Data
         public DbSet<ContaInvestimento> ContasInvestimento { get; set; }
         public DbSet<ContaUsuario> ContaUsuarios { get; set; }
         public DbSet<Lancamento> Lancamentos { get; set; }
+        public DbSet<LancamentoEsporadico> LancamentosEsporadicos { get; set; }
+        public DbSet<LancamentoRecorrente> LancamentosRecorrentes { get; set; }
+        public DbSet<LancamentoParcelado> LancamentosParcelados { get; set; }
+        public DbSet<LancamentoPeriodico> LancamentosPeriodicos { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Rateio> Rateios { get; set; }
         public DbSet<FolhaMensal> FolhasMensais { get; set; }
@@ -77,6 +81,27 @@ namespace Bufunfa.Api.Data
             modelBuilder.Entity<ContaUsuario>()
                 .Property(cu => cu.PercentualParticipacao)
                 .HasColumnType("decimal(5,2)");
+
+            // Configuração de herança TPH (Table Per Hierarchy) para Lancamento
+            modelBuilder.Entity<Lancamento>()
+                .HasDiscriminator<TipoRecorrencia>("TipoRecorrencia")
+                .HasValue<LancamentoEsporadico>(TipoRecorrencia.Esporadico)
+                .HasValue<LancamentoRecorrente>(TipoRecorrencia.Recorrente)
+                .HasValue<LancamentoParcelado>(TipoRecorrencia.Parcelado)
+                .HasValue<LancamentoPeriodico>(TipoRecorrencia.Periodico);
+
+            // Configurações para campos decimais de Lançamento
+            modelBuilder.Entity<Lancamento>()
+                .Property(l => l.ValorProvisionado)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Lancamento>()
+                .Property(l => l.ValorReal)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<LancamentoParcelado>()
+                .Property(lp => lp.ValorParcela)
+                .HasColumnType("decimal(18,2)");
 
             // Configurações de timestamps
             modelBuilder.Entity<Conta>()
@@ -158,6 +183,11 @@ namespace Bufunfa.Api.Data
             // Configurações para GastoRealMercado
             modelBuilder.Entity<GastoRealMercado>()
                 .Property(g => g.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Configurações para Lançamento
+            modelBuilder.Entity<Lancamento>()
+                .Property(l => l.DataCriacao)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
         }
     }

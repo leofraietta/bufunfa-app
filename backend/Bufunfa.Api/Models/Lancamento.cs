@@ -13,10 +13,20 @@ namespace Bufunfa.Api.Models
     {
         Esporadico = 1,
         Recorrente = 2,
-        Parcelado = 3
+        Parcelado = 3,
+        Periodico = 4
     }
 
-    public class Lancamento
+    public enum TipoPeriodicidade
+    {
+        Semanal = 1,
+        Quinzenal = 2,
+        Mensal = 3,
+        Anual = 4,
+        Personalizado = 5
+    }
+
+    public abstract class Lancamento
     {
         [Key]
         public int Id { get; set; }
@@ -41,14 +51,24 @@ namespace Bufunfa.Api.Models
         [Required]
         public TipoRecorrencia TipoRecorrencia { get; set; }
 
+        // Data final para lançamentos recorrentes/parcelados/periódicos (opcional)
+        public DateTime? DataFinal { get; set; }
+
+        // Propriedades específicas para diferentes tipos de lançamento
         // Para lançamentos parcelados
         public int? QuantidadeParcelas { get; set; }
+        public int? ParcelaAtual { get; set; }
 
         // Para lançamentos recorrentes - dia do mês (1-31)
         public int? DiaVencimento { get; set; }
 
-        // Data final para lançamentos recorrentes (opcional)
-        public DateTime? DataFinal { get; set; }
+        // Para lançamentos periódicos
+        public TipoPeriodicidade? TipoPeriodicidade { get; set; }
+        public int? IntervaloDias { get; set; } // Para periodicidade personalizada (N em N dias)
+
+        // Controle de processamento
+        public bool ProcessarRetroativo { get; set; } = false;
+        public DateTime? UltimaDataProcessamento { get; set; }
 
         // Chaves estrangeiras
         [Required]
@@ -78,7 +98,23 @@ namespace Bufunfa.Api.Models
         public DateTime Data => DataInicial;
 
         [NotMapped]
-        public int? ParcelaAtual => null; // Será calculado dinamicamente para cada folha
+        public bool EhRealizado => ValorReal.HasValue;
+
+        // Métodos abstratos para implementação nas classes especializadas
+        public abstract bool PodeSerProcessadoEm(DateTime data);
+        public abstract DateTime? ProximaDataVencimento(DateTime? dataReferencia = null);
+        public abstract IEnumerable<DateTime> ObterDatasVencimento(DateTime dataInicio, DateTime dataFim);
+        public abstract bool EhValido();
+
+        // Métodos virtuais que podem ser sobrescritos
+        public virtual void CalcularDataFinal()
+        {
+            // Implementação padrão - pode ser sobrescrita nas classes filhas
+        }
+
+        public virtual string ObterDescricaoCompleta()
+        {
+            return $"{Descricao} - {Tipo} ({TipoRecorrencia})";
+        }
     }
 }
-
