@@ -7,10 +7,12 @@ namespace Bufunfa.Api.Services
     public class FolhaMensalService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILancamentoProcessorService _lancamentoProcessor;
 
-        public FolhaMensalService(ApplicationDbContext context)
+        public FolhaMensalService(ApplicationDbContext context, ILancamentoProcessorService lancamentoProcessor)
         {
             _context = context;
+            _lancamentoProcessor = lancamentoProcessor;
         }
 
         public async Task<FolhaMensal> AbrirFolhaMensalAsync(int usuarioId, int contaId, int ano, int mes)
@@ -42,7 +44,7 @@ namespace Bufunfa.Api.Services
             _context.FolhasMensais.Add(novaFolha);
             await _context.SaveChangesAsync();
 
-            // Propagar lançamentos para a folha
+            // Propagar lançamentos para a folha usando o serviço especializado
             await PropagrarLancamentosParaFolhaAsync(novaFolha);
 
             // Calcular saldos finais
@@ -100,100 +102,79 @@ namespace Bufunfa.Api.Services
 
         private async Task PropagrarLancamentosParaFolhaAsync(FolhaMensal folha)
         {
-            var dataInicio = new DateTime(folha.Ano, folha.Mes, 1);
-            var dataFim = dataInicio.AddMonths(1).AddDays(-1);
+            // Usar o serviço especializado para processar lançamentos
+            var lancamentosFolha = await _lancamentoProcessor.ProcessarLancamentosParaFolhaAsync(
+                folha.UsuarioId, folha.ContaId, folha);
 
-            // Buscar lançamentos que devem aparecer nesta folha
-            var lancamentos = await _context.Lancamentos
-                .Include(l => l.Categoria)
-                .Where(l => l.UsuarioId == folha.UsuarioId && l.ContaId == folha.ContaId && l.Ativo)
-                .ToListAsync();
-
-            foreach (var lancamento in lancamentos)
+            // Adicionar os lançamentos gerados ao contexto
+            foreach (var lancamentoFolha in lancamentosFolha)
             {
-                var lancamentosFolha = GerarLancamentosFolha(lancamento, folha, dataInicio, dataFim);
-                foreach (var lancamentoFolha in lancamentosFolha)
-                {
-                    _context.LancamentosFolha.Add(lancamentoFolha);
-                }
+                _context.LancamentosFolha.Add(lancamentoFolha);
             }
 
             await _context.SaveChangesAsync();
         }
 
-        private List<LancamentoFolha> GerarLancamentosFolha(Lancamento lancamento, FolhaMensal folha, DateTime dataInicio, DateTime dataFim)
+        /// <summary>
+        /// Reprocessa lançamentos para uma folha específica
+        /// Útil quando há alterações nos lançamentos origem
+        /// </summary>
+        public async Task ReprocessarLancamentosFolhaAsync(int folhaMensalId)
         {
-            var lancamentosFolha = new List<LancamentoFolha>();
+            var folha = await _context.FolhasMensais
+                .Include(f => f.LancamentosFolha)
+                .FirstOrDefaultAsync(f => f.Id == folhaMensalId);
 
-            switch (lancamento.TipoRecorrencia)
-            {
-                case TipoRecorrencia.Esporadico:
-                    // Só adiciona se a data inicial estiver no mês da folha
-                    if (lancamento.DataInicial >= dataInicio && lancamento.DataInicial <= dataFim)
-                    {
-                        lancamentosFolha.Add(CriarLancamentoFolha(lancamento, folha, lancamento.DataInicial, 1, 1));
-                    }
-                    break;
+            if (folha == null) return;
 
-                case TipoRecorrencia.Recorrente:
-                    // Adiciona se o lançamento já estava ativo antes ou durante este mês
-                    if (lancamento.DataInicial <= dataFim && (lancamento.DataFinal == null || lancamento.DataFinal >= dataInicio))
-                    {
-                        var dataVencimento = new DateTime(folha.Ano, folha.Mes, lancamento.DiaVencimento ?? lancamento.DataInicial.Day);
-                        // Ajustar se o dia não existe no mês (ex: 31 em fevereiro)
-                        if (dataVencimento.Month != folha.Mes)
-                        {
-                            dataVencimento = new DateTime(folha.Ano, folha.Mes, DateTime.DaysInMonth(folha.Ano, folha.Mes));
-                        }
-                        lancamentosFolha.Add(CriarLancamentoFolha(lancamento, folha, dataVencimento, 1, 1));
-                    }
-                    break;
+            // Remove lançamentos existentes que não foram realizados
+            var lancamentosParaRemover = folha.LancamentosFolha
+                .Where(lf => !lf.Realizado)
+                .ToList();
 
-                case TipoRecorrencia.Parcelado:
-                    // Calcular qual parcela seria neste mês
-                    var mesesDesdeInicio = ((folha.Ano - lancamento.DataInicial.Year) * 12) + (folha.Mes - lancamento.DataInicial.Month);
-                    if (mesesDesdeInicio >= 0 && mesesDesdeInicio < lancamento.QuantidadeParcelas)
-                    {
-                        var parcelaAtual = mesesDesdeInicio + 1;
-                        var dataVencimentoParcela = new DateTime(folha.Ano, folha.Mes, lancamento.DataInicial.Day);
-                        // Ajustar se o dia não existe no mês
-                        if (dataVencimentoParcela.Month != folha.Mes)
-                        {
-                            dataVencimentoParcela = new DateTime(folha.Ano, folha.Mes, DateTime.DaysInMonth(folha.Ano, folha.Mes));
-                        }
-                        lancamentosFolha.Add(CriarLancamentoFolha(lancamento, folha, dataVencimentoParcela, parcelaAtual, lancamento.QuantidadeParcelas.Value));
-                    }
-                    break;
-            }
+            _context.LancamentosFolha.RemoveRange(lancamentosParaRemover);
+            await _context.SaveChangesAsync();
 
-            return lancamentosFolha;
+            // Reprocessa os lançamentos
+            await PropagrarLancamentosParaFolhaAsync(folha);
+
+            // Recalcula saldos
+            await CalcularSaldosFinaisAsync(folha.Id);
         }
 
-        private LancamentoFolha CriarLancamentoFolha(Lancamento lancamento, FolhaMensal folha, DateTime dataPrevista, int parcelaAtual, int totalParcelas)
+        /// <summary>
+        /// Adiciona um novo lançamento a uma folha existente
+        /// Usado quando um lançamento esporádico é criado diretamente na folha
+        /// </summary>
+        public async Task<LancamentoFolha> AdicionarLancamentoEsporadicoAsync(int folhaMensalId, Lancamento lancamentoEsporadico)
         {
-            var descricao = lancamento.Descricao;
-            if (lancamento.TipoRecorrencia == TipoRecorrencia.Parcelado)
+            var folha = await _context.FolhasMensais.FindAsync(folhaMensalId);
+            if (folha == null) return null;
+
+            // Verifica se é realmente esporádico e se a data corresponde ao mês da folha
+            if (lancamentoEsporadico.TipoRecorrencia != TipoRecorrencia.Esporadico)
+                throw new ArgumentException("Apenas lançamentos esporádicos podem ser adicionados diretamente à folha");
+
+            var dataInicioFolha = new DateTime(folha.Ano, folha.Mes, 1);
+            var dataFimFolha = dataInicioFolha.AddMonths(1).AddDays(-1);
+
+            if (lancamentoEsporadico.DataInicial.Date < dataInicioFolha || lancamentoEsporadico.DataInicial.Date > dataFimFolha)
+                throw new ArgumentException("A data do lançamento esporádico deve corresponder ao mês da folha");
+
+            // Processa o lançamento para a folha
+            var lancamentosFolha = await _lancamentoProcessor.ProcessarLancamentoParaFolhaAsync(lancamentoEsporadico, folha);
+            var lancamentoFolha = lancamentosFolha.FirstOrDefault();
+
+            if (lancamentoFolha != null)
             {
-                descricao += $" - {parcelaAtual}/{totalParcelas}";
+                _context.LancamentosFolha.Add(lancamentoFolha);
+                await _context.SaveChangesAsync();
+
+                // Recalcula saldos da folha
+                await CalcularSaldosFinaisAsync(folha.Id);
             }
 
-            return new LancamentoFolha
-            {
-                FolhaMensalId = folha.Id,
-                LancamentoOrigemId = lancamento.Id,
-                Descricao = descricao,
-                ValorProvisionado = lancamento.ValorProvisionado,
-                ValorReal = lancamento.ValorReal,
-                DataPrevista = dataPrevista,
-                DataRealizacao = lancamento.ValorReal.HasValue ? dataPrevista : null,
-                Tipo = lancamento.Tipo,
-                TipoRecorrencia = lancamento.TipoRecorrencia,
-                ParcelaAtual = lancamento.TipoRecorrencia == TipoRecorrencia.Parcelado ? parcelaAtual : null,
-                TotalParcelas = lancamento.TipoRecorrencia == TipoRecorrencia.Parcelado ? totalParcelas : null,
-                CategoriaId = lancamento.CategoriaId,
-                Realizado = lancamento.ValorReal.HasValue,
-                DataCriacao = DateTime.UtcNow
-            };
+            return lancamentoFolha;
         }
 
         private async Task CalcularSaldosFinaisAsync(int folhaMensalId)

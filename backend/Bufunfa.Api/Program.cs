@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Data;
 using Bufunfa.Api.Services;
+using Bufunfa.Api.Factories;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +22,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<FolhaMensalService>();
 builder.Services.AddScoped<ICartaoCreditoService, CartaoCreditoService>();
 builder.Services.AddScoped<IProvisionamentoService, ProvisionamentoService>();
+
+// Registrar novos serviços para lançamentos e folhas
+builder.Services.AddScoped<ILancamentoProcessorService, LancamentoProcessorService>();
+builder.Services.AddScoped<IFolhaAutomaticaService, FolhaAutomaticaService>();
+builder.Services.AddScoped<ILancamentoFactory, LancamentoFactory>();
 
 // Configura CORS para permitir requisições do frontend
 builder.Services.AddCors(options =>
