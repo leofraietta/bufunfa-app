@@ -28,6 +28,10 @@ builder.Services.AddScoped<ILancamentoProcessorService, LancamentoProcessorServi
 builder.Services.AddScoped<IFolhaAutomaticaService, FolhaAutomaticaService>();
 builder.Services.AddScoped<ILancamentoFactory, LancamentoFactory>();
 
+// Registrar serviços para contas conjuntas e cartões compartilhados
+builder.Services.AddScoped<IContaConjuntaService, ContaConjuntaService>();
+builder.Services.AddScoped<ICartaoCompartilhadoService, CartaoCompartilhadoService>();
+
 // Configura CORS para permitir requisições do frontend
 builder.Services.AddCors(options =>
 {

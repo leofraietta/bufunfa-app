@@ -177,7 +177,7 @@ namespace Bufunfa.Api.Services
             return lancamentoFolha;
         }
 
-        private async Task CalcularSaldosFinaisAsync(int folhaMensalId)
+        public async Task CalcularSaldosFinaisAsync(int folhaMensalId)
         {
             var folha = await _context.FolhasMensais
                 .Include(f => f.LancamentosFolha)
