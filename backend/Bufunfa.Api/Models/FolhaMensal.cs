@@ -46,7 +46,7 @@ namespace Bufunfa.Api.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalDespesasProvisionadas { get; set; }
 
-        public DateTime DataCriacao { get; set; }
+        public DateTime DataCriacao { get; set; } = DateTime.UtcNow;
         public DateTime? DataFechamento { get; set; }
         public bool Fechada { get; set; }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -22,14 +22,22 @@ import { AuthService } from './auth/auth.service';
 })
 export class AppComponent implements OnInit {
   title = 'Bufunfa - Controle Financeiro Pessoal';
+  isAuthenticated = false;
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     console.log('AppComponent loaded');
+    
+    // Subscribe to authentication changes
+    this.authService.currentUser.subscribe(user => {
+      this.isAuthenticated = !!user && !!this.authService.getToken();
+      this.cdr.detectChanges();
+    });
     
     // Listen to router events to handle authentication after navigation
     this.router.events.subscribe(event => {
@@ -48,10 +56,6 @@ export class AppComponent implements OnInit {
         }
       }
     });
-  }
-
-  get isAuthenticated(): boolean {
-    return this.authService.isAuthenticated;
   }
 
   logout() {

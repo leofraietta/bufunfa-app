@@ -72,7 +72,7 @@ namespace Bufunfa.Api.Models
         /// </summary>
         public override DateTime? ProximaDataVencimento(DateTime? dataReferencia = null)
         {
-            var referencia = dataReferencia ?? DateTime.Now;
+            var referencia = dataReferencia ?? DateTime.UtcNow;
             
             // Se ainda não chegou na data inicial
             if (referencia.Date < DataInicial.Date)

@@ -19,7 +19,10 @@ namespace Bufunfa.Api.Services
         {
             // Verificar se a folha já existe
             var folhaExistente = await _context.FolhasMensais
-                .FirstOrDefaultAsync(f => f.UsuarioId == usuarioId && f.ContaId == contaId && f.Ano == ano && f.Mes == mes);
+                .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(f => f.ContaId == contaId && f.Ano == ano && f.Mes == mes && 
+                    f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo));
 
             if (folhaExistente != null)
             {
@@ -59,7 +62,9 @@ namespace Bufunfa.Api.Services
                 .Include(f => f.LancamentosFolha)
                     .ThenInclude(lf => lf.Categoria)
                 .Include(f => f.Conta)
-                .FirstOrDefaultAsync(f => f.UsuarioId == usuarioId && f.ContaId == contaId && f.Ano == ano && f.Mes == mes);
+                    .ThenInclude(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(f => f.ContaId == contaId && f.Ano == ano && f.Mes == mes && 
+                    f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo));
 
             if (folha == null)
             {
@@ -74,8 +79,10 @@ namespace Bufunfa.Api.Services
         {
             return await _context.FolhasMensais
                 .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
                 .Include(f => f.LancamentosFolha)
-                .Where(f => f.UsuarioId == usuarioId && f.Ano == ano && f.Mes == mes)
+                .Where(f => f.Ano == ano && f.Mes == mes && 
+                    f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo))
                 .ToListAsync();
         }
 
@@ -89,7 +96,10 @@ namespace Bufunfa.Api.Services
             // Verificar se há folha do mês anterior
             var (anoAnterior, mesAnterior) = ObterMesAnterior(ano, mes);
             var folhaAnterior = await _context.FolhasMensais
-                .FirstOrDefaultAsync(f => f.UsuarioId == usuarioId && f.ContaId == contaId && f.Ano == anoAnterior && f.Mes == mesAnterior);
+                .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(f => f.ContaId == contaId && f.Ano == anoAnterior && f.Mes == mesAnterior && 
+                    f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo));
 
             if (folhaAnterior != null)
             {

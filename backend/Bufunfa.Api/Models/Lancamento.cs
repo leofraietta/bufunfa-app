@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Bufunfa.Api.Models
 {
@@ -73,13 +74,16 @@ namespace Bufunfa.Api.Models
         // Chaves estrangeiras
         [Required]
         public int ContaId { get; set; }
+        [JsonIgnore]
         public Conta Conta { get; set; }
 
         public int? CategoriaId { get; set; }
+        [JsonIgnore]
         public Categoria Categoria { get; set; }
 
         [Required]
         public int UsuarioId { get; set; }
+        [JsonIgnore]
         public Usuario Usuario { get; set; }
 
         // Controle
@@ -88,6 +92,7 @@ namespace Bufunfa.Api.Models
         public bool Ativo { get; set; } = true;
 
         // Relacionamento com lançamentos de folha
+        [JsonIgnore]
         public ICollection<LancamentoFolha> LancamentosFolha { get; set; } = new List<LancamentoFolha>();
 
         // Propriedades calculadas

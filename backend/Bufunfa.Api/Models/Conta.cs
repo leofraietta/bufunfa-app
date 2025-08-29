@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Bufunfa.Api.Models
 {
@@ -43,12 +44,15 @@ namespace Bufunfa.Api.Models
         public DateTime? DataAtualizacao { get; set; }
 
         // Relacionamento many-to-many com usuários
+        [JsonIgnore]
         public ICollection<ContaUsuario> ContaUsuarios { get; set; } = new List<ContaUsuario>();
 
         // Relacionamento com lançamentos
+        [JsonIgnore]
         public ICollection<Lancamento> Lancamentos { get; set; } = new List<Lancamento>();
 
         // Relacionamento com folhas mensais
+        [JsonIgnore]
         public ICollection<FolhaMensal> FolhasMensais { get; set; } = new List<FolhaMensal>();
 
         /// <summary>

@@ -100,7 +100,7 @@ namespace Bufunfa.Api.Services
             var jaExiste = await _context.LancamentosFolha
                 .AnyAsync(lf => lf.FolhaMensalId == folha.Id && 
                                lf.LancamentoOrigemId == lancamento.Id && 
-                               lf.DataPrevista.Date == dataVencimento.Date);
+                               lf.DataPrevista.Date == dataVencimento.ToUniversalTime().Date);
 
             if (jaExiste)
                 return null;

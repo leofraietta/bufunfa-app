@@ -52,7 +52,7 @@ namespace Bufunfa.Api.Models
 
         // Propriedades calculadas
         public decimal ValorEfetivo => ValorReal ?? ValorProvisionado;
-        public bool EmAtraso => !Realizado && DataPrevista < DateTime.Now.Date;
+        public bool EmAtraso => !Realizado && DataPrevista < DateTime.UtcNow.Date;
         public string StatusDescricao => Realizado ? "Realizado" : (EmAtraso ? "Em Atraso" : "Pendente");
     }
 }

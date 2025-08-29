@@ -28,7 +28,7 @@ namespace Bufunfa.Api.Models
         /// </summary>
         public override DateTime? ProximaDataVencimento(DateTime? dataReferencia = null)
         {
-            var referencia = dataReferencia ?? DateTime.Now;
+            var referencia = dataReferencia ?? DateTime.UtcNow;
             return referencia.Date <= DataInicial.Date ? DataInicial : null;
         }
 
@@ -77,7 +77,7 @@ namespace Bufunfa.Api.Models
         /// </summary>
         public void MarcarComoProcessado()
         {
-            UltimaDataProcessamento = DateTime.Now;
+            UltimaDataProcessamento = DateTime.UtcNow;
         }
     }
 }

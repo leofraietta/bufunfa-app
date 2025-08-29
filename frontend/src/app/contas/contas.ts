@@ -11,10 +11,21 @@ import { ContaDialogComponent } from './conta-dialog';
 interface Conta {
   id: number;
   nome: string;
+  descricao: string;
   tipo: number;
   saldoInicial: number;
-  dataFechamento?: Date;
-  dataVencimento?: Date;
+  saldoAtual: number;
+  ativa: boolean;
+  dataCriacao: Date;
+  dataAtualizacao?: Date;
+  // Propriedades específicas para CartaoCredito
+  diaFechamento?: number;
+  diaVencimento?: number;
+  limiteCredito?: number;
+  // Propriedades específicas para ContaCorrente
+  numeroConta?: string;
+  numeroAgencia?: string;
+  nomeBanco?: string;
 }
 
 @Component({
@@ -56,8 +67,29 @@ export class ContasComponent implements OnInit {
         this.isLoading = false;
         // Fallback para dados mockados em caso de erro
         this.contas = [
-          { id: 1, nome: 'Conta Corrente', tipo: 1, saldoInicial: 1000.00 },
-          { id: 2, nome: 'Cartão Visa', tipo: 2, saldoInicial: 0.00 }
+          { 
+            id: 1, 
+            nome: 'Conta Corrente', 
+            descricao: 'Conta corrente principal',
+            tipo: 1, 
+            saldoInicial: 1000.00,
+            saldoAtual: 1000.00,
+            ativa: true,
+            dataCriacao: new Date()
+          },
+          { 
+            id: 2, 
+            nome: 'Cartão Visa', 
+            descricao: 'Cartão de crédito Visa',
+            tipo: 3, 
+            saldoInicial: 0.00,
+            saldoAtual: 0.00,
+            ativa: true,
+            dataCriacao: new Date(),
+            diaFechamento: 5,
+            diaVencimento: 15,
+            limiteCredito: 5000.00
+          }
         ];
       }
     });

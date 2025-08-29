@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Data;
 using Bufunfa.Api.Models;
+using Bufunfa.Api.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
@@ -73,12 +74,17 @@ namespace Bufunfa.Api.Controllers
 
         // POST: api/Lancamentos
         [HttpPost]
-        public async Task<ActionResult<Lancamento>> PostLancamento(Lancamento lancamento)
+        public async Task<ActionResult<Lancamento>> PostLancamento(CriarLancamentoDto criarLancamentoDto)
         {
             var userId = GetUserId();
+            
+            // Converter DTO para entidade
+            var lancamento = criarLancamentoDto.ToLancamento();
             lancamento.UsuarioId = userId;
 
-            var conta = await _context.Contas.FirstOrDefaultAsync(c => c.Id == lancamento.ContaId && c.UsuarioId == userId);
+            var conta = await _context.Contas
+                .Include(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(c => c.Id == lancamento.ContaId && c.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo));
             if (conta == null)
             {
                 return BadRequest("Conta não encontrada ou não pertence ao usuário.");

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Bufunfa.Api.Models
 {
@@ -73,6 +74,7 @@ namespace Bufunfa.Api.Models
         /// <summary>
         /// Conta corrente responsável pelo pagamento da fatura
         /// </summary>
+        [JsonIgnore]
         public ContaCorrente? ContaCorrenteResponsavel { get; set; }
 
         /// <summary>

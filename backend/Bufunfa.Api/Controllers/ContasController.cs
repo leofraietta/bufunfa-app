@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Data;
 using Bufunfa.Api.Models;
+using Bufunfa.Api.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
@@ -34,7 +35,14 @@ namespace Bufunfa.Api.Controllers
         public async Task<ActionResult<IEnumerable<Conta>>> GetContas()
         {
             var userId = GetUserId();
-            return await _context.Contas.Where(c => c.UsuarioId == userId).ToListAsync();
+            
+            // Buscar contas através do relacionamento ContaUsuario
+            var contas = await _context.Contas
+                .Include(c => c.ContaUsuarios)
+                .Where(c => c.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo))
+                .ToListAsync();
+                
+            return contas;
         }
 
         // GET: api/Contas/5
@@ -42,7 +50,11 @@ namespace Bufunfa.Api.Controllers
         public async Task<ActionResult<Conta>> GetConta(int id)
         {
             var userId = GetUserId();
-            var conta = await _context.Contas.FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == userId);
+            
+            // Buscar conta através do relacionamento ContaUsuario
+            var conta = await _context.Contas
+                .Include(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(c => c.Id == id && c.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo));
 
             if (conta == null)
             {
@@ -54,9 +66,12 @@ namespace Bufunfa.Api.Controllers
 
         // POST: api/Contas
         [HttpPost]
-        public async Task<ActionResult<Conta>> PostConta(Conta conta)
+        public async Task<ActionResult<Conta>> PostConta(CriarContaDto criarContaDto)
         {
             var userId = GetUserId();
+            
+            // Converter DTO para entidade
+            var conta = criarContaDto.ToConta();
             
             // Adicionar a conta
             _context.Contas.Add(conta);
@@ -90,7 +105,12 @@ namespace Bufunfa.Api.Controllers
             }
 
             var userId = GetUserId();
-            if (conta.UsuarioId != userId)
+            
+            // Verificar se o usuário tem permissão para alterar esta conta
+            var temPermissao = await _context.ContaUsuarios
+                .AnyAsync(cu => cu.ContaId == id && cu.UsuarioId == userId && cu.Ativo && cu.PodeEscrever);
+                
+            if (!temPermissao)
             {
                 return Forbid(); // Usuário não tem permissão para alterar esta conta
             }
@@ -121,7 +141,12 @@ namespace Bufunfa.Api.Controllers
         public async Task<IActionResult> DeleteConta(int id)
         {
             var userId = GetUserId();
-            var conta = await _context.Contas.FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == userId);
+            
+            // Verificar se o usuário tem permissão para deletar esta conta
+            var conta = await _context.Contas
+                .Include(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(c => c.Id == id && c.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo && cu.PodeAdministrar));
+                
             if (conta == null)
             {
                 return NotFound();

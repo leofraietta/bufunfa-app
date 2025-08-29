@@ -3,11 +3,31 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ng serve",
+      "name": "C#: Bufunfa.Api Debug",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/backend/Bufunfa.Api/bin/Debug/net8.0/Bufunfa.Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/backend/Bufunfa.Api",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Angular: Debug",
       "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start",
-      "url": "http://localhost:4200/"
+      "preLaunchTask": "npm: start - frontend",
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "userDataDir": "${workspaceFolder}/.vscode/chrome_debug_profile"
     },
     {
       "name": "ng test",
@@ -15,6 +35,17 @@
       "request": "launch",
       "preLaunchTask": "npm: test",
       "url": "http://localhost:9876/debug.html"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch Full Stack",
+      "configurations": [
+        "C#: Bufunfa.Api Debug",
+        "Angular: Debug"
+      ],
+      "stopAll": true,
+      "preLaunchTask": "build-all"
     }
   ]
 }

@@ -32,10 +32,12 @@ namespace Bufunfa.Api.Services
 
             // Verifica se já existe folha para este mês
             var folhaExistente = await _context.FolhasMensais
-                .FirstOrDefaultAsync(f => f.UsuarioId == usuarioId && 
-                                         f.ContaId == conta.Id && 
+                .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(f => f.ContaId == conta.Id && 
                                          f.Ano == ano && 
-                                         f.Mes == mes);
+                                         f.Mes == mes &&
+                                         f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo));
 
             if (folhaExistente == null)
             {
@@ -112,9 +114,11 @@ namespace Bufunfa.Api.Services
 
             // Buscar todas as folhas futuras desta conta
             var folhasFuturas = await _context.FolhasMensais
-                .Where(f => f.UsuarioId == lancamento.UsuarioId && 
-                           f.ContaId == lancamento.ContaId &&
-                           new DateTime(f.Ano, f.Mes, 1) > mesAtual)
+                .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
+                .Where(f => f.ContaId == lancamento.ContaId &&
+                           new DateTime(f.Ano, f.Mes, 1) > mesAtual &&
+                           f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == lancamento.UsuarioId && cu.Ativo))
                 .ToListAsync();
 
             foreach (var folha in folhasFuturas)
@@ -178,11 +182,13 @@ namespace Bufunfa.Api.Services
 
             var folhasVazias = await _context.FolhasMensais
                 .Include(f => f.LancamentosFolha)
-                .Where(f => f.UsuarioId == usuarioId && 
-                           f.ContaId == contaId &&
+                .Include(f => f.Conta)
+                    .ThenInclude(c => c.ContaUsuarios)
+                .Where(f => f.ContaId == contaId &&
                            new DateTime(f.Ano, f.Mes, 1) > mesAtual &&
                            !f.LancamentosFolha.Any() &&
-                           !f.Fechada)
+                           !f.Fechada &&
+                           f.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo))
                 .ToListAsync();
 
             _context.FolhasMensais.RemoveRange(folhasVazias);

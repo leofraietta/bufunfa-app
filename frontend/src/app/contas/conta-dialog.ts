@@ -59,41 +59,43 @@ export class ContaDialogComponent implements OnInit {
   createForm(): FormGroup {
     return this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(2)]],
+      descricao: ['', [Validators.required, Validators.minLength(2)]],
       tipo: ['', Validators.required],
       saldoInicial: [0, [Validators.required, Validators.min(0)]],
-      dataFechamento: [''],
-      dataVencimento: ['']
+      diaFechamento: [''],
+      diaVencimento: ['']
     });
   }
 
   populateForm(conta: any) {
     this.contaForm.patchValue({
       nome: conta.nome,
+      descricao: conta.descricao,
       tipo: conta.tipo,
       saldoInicial: conta.saldoInicial,
-      dataFechamento: conta.dataFechamento ? new Date(conta.dataFechamento) : null,
-      dataVencimento: conta.dataVencimento ? new Date(conta.dataVencimento) : null
+      diaFechamento: conta.diaFechamento || null,
+      diaVencimento: conta.diaVencimento || null
     });
     this.onTipoChange(conta.tipo);
   }
 
   onTipoChange(tipo: number) {
-    this.isCartaoCredito = tipo === 2;
+    this.isCartaoCredito = tipo === 3; // Fixed: ContaCartaoCredito = 3
     
     if (this.isCartaoCredito) {
       // Adicionar validações para cartão de crédito
-      this.contaForm.get('dataFechamento')?.setValidators([Validators.required]);
-      this.contaForm.get('dataVencimento')?.setValidators([Validators.required]);
+      this.contaForm.get('diaFechamento')?.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
+      this.contaForm.get('diaVencimento')?.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
     } else {
       // Remover validações para conta principal
-      this.contaForm.get('dataFechamento')?.clearValidators();
-      this.contaForm.get('dataVencimento')?.clearValidators();
-      this.contaForm.get('dataFechamento')?.setValue('');
-      this.contaForm.get('dataVencimento')?.setValue('');
+      this.contaForm.get('diaFechamento')?.clearValidators();
+      this.contaForm.get('diaVencimento')?.clearValidators();
+      this.contaForm.get('diaFechamento')?.setValue('');
+      this.contaForm.get('diaVencimento')?.setValue('');
     }
     
-    this.contaForm.get('dataFechamento')?.updateValueAndValidity();
-    this.contaForm.get('dataVencimento')?.updateValueAndValidity();
+    this.contaForm.get('diaFechamento')?.updateValueAndValidity();
+    this.contaForm.get('diaVencimento')?.updateValueAndValidity();
   }
 
   onSave() {
@@ -104,10 +106,11 @@ export class ContaDialogComponent implements OnInit {
       // Preparar dados para envio
       const contaData = {
         nome: formData.nome,
+        descricao: formData.descricao,
         tipo: formData.tipo,
         saldoInicial: formData.saldoInicial,
-        dataFechamento: formData.dataFechamento || null,
-        dataVencimento: formData.dataVencimento || null
+        diaFechamento: formData.diaFechamento || null,
+        diaVencimento: formData.diaVencimento || null
       };
 
       const operation = this.isEdit 
