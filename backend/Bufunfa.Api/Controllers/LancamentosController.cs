@@ -35,11 +35,19 @@ namespace Bufunfa.Api.Controllers
         public async Task<ActionResult<IEnumerable<Lancamento>>> GetLancamentos()
         {
             var userId = GetUserId();
-            return await _context.Lancamentos
-                .Include(l => l.Conta)
-                .Include(l => l.Categoria)
-                .Where(l => l.UsuarioId == userId)
-                .ToListAsync();
+            
+            try
+            {
+                return await _context.Lancamentos
+                    .Include(l => l.Conta)
+                    .Include(l => l.Categoria)
+                    .Where(l => l.UsuarioId == userId)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro interno do servidor: {ex.Message}");
+            }
         }
 
         // GET: api/Lancamentos/5
@@ -90,50 +98,92 @@ namespace Bufunfa.Api.Controllers
                 return BadRequest("Conta não encontrada ou não pertence ao usuário.");
             }
 
-            // Lógica para despesas recorrentes, parceladas e esporádicas
-            if (lancamento.Tipo == TipoLancamento.Despesa)
+            // Validar campos específicos baseados no tipo de recorrência
+            if (lancamento.TipoRecorrencia == TipoRecorrencia.Parcelado)
             {
-                if (lancamento.TipoRecorrencia == TipoRecorrencia.Parcelado)
+                if (!lancamento.QuantidadeParcelas.HasValue || lancamento.QuantidadeParcelas <= 0)
                 {
-                    if (!lancamento.QuantidadeParcelas.HasValue || lancamento.QuantidadeParcelas <= 0)
-                    {
-                        return BadRequest("Quantidade de parcelas é obrigatória para lançamentos parcelados.");
-                    }
-                    // Para lançamentos parcelados, criar um único lançamento parcelado
-                    var lancamentoParcelado = new LancamentoParcelado
-                    {
-                        Descricao = lancamento.Descricao,
-                        ValorProvisionado = lancamento.ValorProvisionado,
-                        DataInicial = lancamento.DataInicial,
-                        Tipo = lancamento.Tipo,
-                        QuantidadeParcelas = lancamento.QuantidadeParcelas.Value,
-                        DiaVencimento = lancamento.DataInicial.Day,
-                        ContaId = lancamento.ContaId,
-                        CategoriaId = lancamento.CategoriaId,
-                        UsuarioId = userId,
-                        DataCriacao = DateTime.Now,
-                        Ativo = true
-                    };
-                    
-                    // Calcular data final automaticamente
-                    lancamentoParcelado.CalcularDataFinal();
-                    
-                    _context.Lancamentos.Add(lancamentoParcelado);
+                    return BadRequest("Quantidade de parcelas é obrigatória para lançamentos parcelados.");
                 }
-                else if (lancamento.TipoRecorrencia == TipoRecorrencia.Recorrente)
+                
+                // Para lançamentos parcelados, criar um único lançamento parcelado
+                var lancamentoParcelado = new LancamentoParcelado
                 {
-                    // Para despesas recorrentes, o valor é provisionado e o impacto no saldo é o valor real
-                    // O valor provisionado é armazenado no próprio lançamento para referência
-                    _context.Lancamentos.Add(lancamento);
-                }
-                else // Esporádico
-                {
-                    _context.Lancamentos.Add(lancamento);
-                }
+                    Descricao = lancamento.Descricao,
+                    ValorProvisionado = lancamento.ValorProvisionado,
+                    DataInicial = lancamento.DataInicial,
+                    Tipo = lancamento.Tipo,
+                    Status = lancamento.Status,
+                    QuantidadeParcelas = lancamento.QuantidadeParcelas.Value,
+                    DiaVencimento = lancamento.DataInicial.Day,
+                    ContaId = lancamento.ContaId,
+                    CategoriaId = lancamento.CategoriaId,
+                    UsuarioId = userId,
+                    DataCriacao = DateTime.Now,
+                    Ativo = true
+                };
+                
+                // Calcular data final automaticamente
+                lancamentoParcelado.CalcularDataFinal();
+                
+                _context.Lancamentos.Add(lancamentoParcelado);
             }
-            else // Receita
+            else if (lancamento.TipoRecorrencia == TipoRecorrencia.Recorrente)
             {
-                _context.Lancamentos.Add(lancamento);
+                // Validar periodicidade para recorrentes
+                if (!lancamento.TipoPeriodicidade.HasValue)
+                {
+                    return BadRequest("Tipo de periodicidade é obrigatório para lançamentos recorrentes.");
+                }
+                
+                // Validar intervalo para periodicidade personalizada
+                if (lancamento.TipoPeriodicidade == TipoPeriodicidade.Personalizado)
+                {
+                    if (!lancamento.IntervaloDias.HasValue || lancamento.IntervaloDias < 1 || lancamento.IntervaloDias > 6)
+                    {
+                        return BadRequest("Intervalo deve ser entre 1 e 6 dias para periodicidade personalizada.");
+                    }
+                }
+                
+                var lancamentoRecorrente = new LancamentoRecorrente
+                {
+                    Descricao = lancamento.Descricao,
+                    ValorProvisionado = lancamento.ValorProvisionado,
+                    DataInicial = lancamento.DataInicial,
+                    DataFinal = lancamento.DataFinal,
+                    Tipo = lancamento.Tipo,
+                    Status = lancamento.Status,
+                    TipoPeriodicidade = lancamento.TipoPeriodicidade.Value,
+                    IntervaloDias = lancamento.IntervaloDias,
+                    AjustarDiaUtil = lancamento.AjustarDiaUtil,
+                    DiaVencimento = lancamento.DataInicial.Day,
+                    ContaId = lancamento.ContaId,
+                    CategoriaId = lancamento.CategoriaId,
+                    UsuarioId = userId,
+                    DataCriacao = DateTime.Now,
+                    Ativo = true
+                };
+                
+                _context.Lancamentos.Add(lancamentoRecorrente);
+            }
+            else // Esporádico
+            {
+                var lancamentoEsporadico = new LancamentoEsporadico
+                {
+                    Descricao = lancamento.Descricao,
+                    ValorProvisionado = lancamento.ValorProvisionado,
+                    ValorReal = lancamento.ValorReal,
+                    DataInicial = lancamento.DataInicial,
+                    Tipo = lancamento.Tipo,
+                    Status = lancamento.Status,
+                    ContaId = lancamento.ContaId,
+                    CategoriaId = lancamento.CategoriaId,
+                    UsuarioId = userId,
+                    DataCriacao = DateTime.Now,
+                    Ativo = true
+                };
+                
+                _context.Lancamentos.Add(lancamentoEsporadico);
             }
 
             await _context.SaveChangesAsync();
@@ -182,16 +232,43 @@ namespace Bufunfa.Api.Controllers
         public async Task<IActionResult> DeleteLancamento(int id)
         {
             var userId = GetUserId();
-            var lancamento = await _context.Lancamentos.FirstOrDefaultAsync(l => l.Id == id && l.UsuarioId == userId);
+            
+            // Buscar o lançamento incluindo a conta e os lançamentos de folha relacionados
+            var lancamento = await _context.Lancamentos
+                .Include(l => l.Conta)
+                .ThenInclude(c => c.ContaUsuarios)
+                .Include(l => l.LancamentosFolha)
+                .FirstOrDefaultAsync(l => l.Id == id && l.UsuarioId == userId);
+            
             if (lancamento == null)
             {
-                return NotFound();
+                return NotFound("Lançamento não encontrado ou não pertence ao usuário.");
             }
 
-            _context.Lancamentos.Remove(lancamento);
-            await _context.SaveChangesAsync();
+            // Verificar se o usuário tem acesso à conta do lançamento
+            var temAcesso = lancamento.Conta.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo);
+            if (!temAcesso)
+            {
+                return Forbid("Usuário não tem acesso a esta conta.");
+            }
 
-            return NoContent();
+            try
+            {
+                // Primeiro, remover todos os lançamentos de folha relacionados
+                if (lancamento.LancamentosFolha.Any())
+                {
+                    _context.LancamentosFolha.RemoveRange(lancamento.LancamentosFolha);
+                }
+
+                // Depois, remover o lançamento principal
+                _context.Lancamentos.Remove(lancamento);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro interno do servidor: {ex.Message}");
+            }
         }
 
         private bool LancamentoExists(int id)

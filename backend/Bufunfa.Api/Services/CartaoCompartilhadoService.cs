@@ -206,9 +206,8 @@ namespace Bufunfa.Api.Services
                     ContaId = cartaoId,
                     UsuarioId = usuarioId,
                     PercentualParticipacao = 0, // Cartões não usam percentual
-                    PodeLer = true,
-                    PodeEscrever = true,
-                    PodeAdministrar = false,
+                    NivelPermissao = PermissionLevel.FullAccess,
+                    EhAdministrador = false,
                     EhProprietario = false,
                     Ativo = true,
                     DataVinculacao = DateTime.UtcNow

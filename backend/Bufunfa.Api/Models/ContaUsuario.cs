@@ -3,6 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Bufunfa.Api.Models
 {
+    public enum PermissionLevel
+    {
+        ViewOnly = 1,
+        FullAccess = 2
+    }
     /// <summary>
     /// Tabela de relacionamento many-to-many entre Conta e Usuario
     /// Permite que uma conta tenha múltiplos usuários e um usuário tenha múltiplas contas
@@ -33,14 +38,43 @@ namespace Bufunfa.Api.Models
         public decimal PercentualParticipacao { get; set; } = 100.00m;
 
         /// <summary>
-        /// Permissões do usuário na conta
+        /// Indica se o usuário é administrador da conta (para contas conjuntas)
         /// </summary>
-        public bool PodeLer { get; set; } = true;
-        public bool PodeEscrever { get; set; } = true;
-        public bool PodeAdministrar { get; set; } = false;
+        public bool EhAdministrador { get; set; } = false;
+
+        /// <summary>
+        /// Nível de permissão do usuário na conta
+        /// </summary>
+        public PermissionLevel NivelPermissao { get; set; } = PermissionLevel.FullAccess;
+
+        /// <summary>
+        /// ID do usuário que convidou este usuário (para contas conjuntas)
+        /// </summary>
+        public int? ConvidadoPorUsuarioId { get; set; }
+        public Usuario ConvidadoPorUsuario { get; set; }
+
+        /// <summary>
+        /// Data do convite
+        /// </summary>
+        public DateTime? DataConvite { get; set; }
 
         public DateTime DataVinculacao { get; set; } = DateTime.UtcNow;
         public DateTime? DataDesvinculacao { get; set; }
         public bool Ativo { get; set; } = true;
+
+        /// <summary>
+        /// Verifica se o usuário pode ler dados da conta
+        /// </summary>
+        public bool PodeLer => Ativo && (NivelPermissao == PermissionLevel.ViewOnly || NivelPermissao == PermissionLevel.FullAccess);
+
+        /// <summary>
+        /// Verifica se o usuário pode escrever/modificar dados da conta
+        /// </summary>
+        public bool PodeEscrever => Ativo && NivelPermissao == PermissionLevel.FullAccess;
+
+        /// <summary>
+        /// Verifica se o usuário pode administrar a conta (convidar usuários, alterar permissões, etc.)
+        /// </summary>
+        public bool PodeAdministrar => Ativo && EhAdministrador;
     }
 }

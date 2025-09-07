@@ -55,6 +55,14 @@ namespace Bufunfa.Api.Models
         [JsonIgnore]
         public ICollection<FolhaMensal> FolhasMensais { get; set; } = new List<FolhaMensal>();
 
+        // Relacionamentos com outras contas
+        public virtual ICollection<AccountRelationship> RelacionamentosOrigem { get; set; } = new List<AccountRelationship>();
+        public virtual ICollection<AccountRelationship> RelacionamentosDestino { get; set; } = new List<AccountRelationship>();
+
+        // Status das folhas mensais
+        [JsonIgnore]
+        public ICollection<MonthlySheetStatus> MonthlySheetStatuses { get; set; } = new List<MonthlySheetStatus>();
+
         /// <summary>
         /// Método virtual para calcular saldo - pode ser sobrescrito pelas classes filhas
         /// </summary>
@@ -68,7 +76,17 @@ namespace Bufunfa.Api.Models
         /// </summary>
         public virtual bool PodeReceberLancamento(Lancamento lancamento)
         {
-            return Ativa;
+            if (!Ativa) return false;
+            
+            // Verificar se a folha mensal está aberta (se existir)
+            var dataLancamento = lancamento.DataInicial;
+            var statusFolha = MonthlySheetStatuses?.FirstOrDefault(s => 
+                s.Ano == dataLancamento.Year && s.Mes == dataLancamento.Month);
+            
+            if (statusFolha != null && statusFolha.Status == SheetStatus.Closed)
+                return false;
+            
+            return true;
         }
 
         // Métodos auxiliares para compatibilidade com código existente
@@ -99,6 +117,30 @@ namespace Bufunfa.Api.Models
         public bool TemAcesso(int usuarioId)
         {
             return ContaUsuarios?.Any(cu => cu.UsuarioId == usuarioId && cu.Ativo) ?? false;
+        }
+
+        /// <summary>
+        /// Obtém a conta fonte pagadora (se configurada)
+        /// </summary>
+        [NotMapped]
+        public Conta? ContaFontePagadora => RelacionamentosDestino?
+            .FirstOrDefault(r => r.RelationshipType == RelationshipType.PaymentSource && r.Ativa)?
+            .ContaOrigem;
+
+        /// <summary>
+        /// Obtém todas as contas relacionadas
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<Conta> ContasRelacionadas => RelacionamentosOrigem?
+            .Where(r => r.RelationshipType == RelationshipType.Related && r.Ativa)
+            .Select(r => r.ContaDestino) ?? Enumerable.Empty<Conta>();
+
+        /// <summary>
+        /// Verifica se tem fonte pagadora configurada
+        /// </summary>
+        public bool TemFontePagadora()
+        {
+            return ContaFontePagadora != null;
         }
     }
 }

@@ -28,10 +28,7 @@ namespace Bufunfa.Api.Factories
         /// </summary>
         LancamentoParcelado CriarLancamentoParcelado();
 
-        /// <summary>
-        /// Cria um lançamento periódico
-        /// </summary>
-        LancamentoPeriodico CriarLancamentoPeriodico();
+        // CriarLancamentoPeriodico removido - funcionalidade integrada em LancamentoRecorrente
 
         /// <summary>
         /// Valida se os parâmetros são válidos para o tipo de lançamento

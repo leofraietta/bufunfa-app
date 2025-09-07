@@ -80,6 +80,9 @@ namespace Bufunfa.Api.Controllers
                 return Forbid(); // Usuário não tem permissão para alterar esta categoria
             }
 
+            // Atualizar data de modificação
+            categoria.DataAtualizacao = DateTime.UtcNow;
+
             _context.Entry(categoria).State = EntityState.Modified;
 
             try
@@ -99,6 +102,33 @@ namespace Bufunfa.Api.Controllers
             }
 
             return NoContent();
+        }
+
+        // GET: api/Categorias/5/saldo/2024/1
+        [HttpGet("{id}/saldo/{ano}/{mes}")]
+        public async Task<ActionResult<object>> GetSaldoCategoria(int id, int ano, int mes)
+        {
+            var userId = GetUserId();
+            var categoria = await _context.Categorias
+                .Include(c => c.Lancamentos)
+                .FirstOrDefaultAsync(c => c.Id == id && c.UsuarioId == userId);
+
+            if (categoria == null)
+            {
+                return NotFound();
+            }
+
+            var gastoReal = categoria.CalcularGastoReal(ano, mes);
+            var saldo = categoria.CalcularSaldo(ano, mes);
+
+            return Ok(new
+            {
+                categoria.ValorProvisionadoMensal,
+                GastoReal = gastoReal,
+                Saldo = saldo,
+                Ano = ano,
+                Mes = mes
+            });
         }
 
         // DELETE: api/Categorias/5

@@ -50,6 +50,10 @@ namespace Bufunfa.Api.Models
         public DateTime? DataFechamento { get; set; }
         public bool Fechada { get; set; }
 
+        // Relacionamento com status da folha mensal
+        public int? MonthlySheetStatusId { get; set; }
+        public MonthlySheetStatus MonthlySheetStatus { get; set; }
+
         // Relacionamento com lançamentos da folha
         public ICollection<LancamentoFolha> LancamentosFolha { get; set; } = new List<LancamentoFolha>();
 

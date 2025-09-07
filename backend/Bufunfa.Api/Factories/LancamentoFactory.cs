@@ -18,7 +18,7 @@ namespace Bufunfa.Api.Factories
                 TipoRecorrencia.Esporadico => new LancamentoEsporadico(),
                 TipoRecorrencia.Recorrente => new LancamentoRecorrente(),
                 TipoRecorrencia.Parcelado => new LancamentoParcelado(),
-                TipoRecorrencia.Periodico => new LancamentoPeriodico(),
+                // TipoRecorrencia.Periodico removido - agora é parte de Recorrente
                 _ => throw new ArgumentException($"Tipo de recorrência não suportado: {tipoRecorrencia}")
             };
         }
@@ -49,13 +49,7 @@ namespace Bufunfa.Api.Factories
             return lancamento;
         }
 
-        /// <summary>
-        /// Cria um lançamento periódico
-        /// </summary>
-        public LancamentoPeriodico CriarLancamentoPeriodico()
-        {
-            return new LancamentoPeriodico();
-        }
+        // CriarLancamentoPeriodico removido - funcionalidade integrada em LancamentoRecorrente
 
         /// <summary>
         /// Valida se os parâmetros são válidos para o tipo de lançamento
@@ -102,29 +96,7 @@ namespace Bufunfa.Api.Factories
                     }
                     break;
 
-                case TipoRecorrencia.Periodico:
-                    lancamento.TipoPeriodicidade = dto.TipoPeriodicidade;
-                    lancamento.DataFinal = dto.DataFinal;
-                    
-                    if (lancamento is LancamentoPeriodico periodico)
-                    {
-                        switch (dto.TipoPeriodicidade)
-                        {
-                            case TipoPeriodicidade.Semanal:
-                                periodico.DiaDaSemana = dto.DiaDaSemana;
-                                break;
-                            case TipoPeriodicidade.Mensal:
-                                lancamento.DiaVencimento = dto.DiaVencimento;
-                                break;
-                            case TipoPeriodicidade.Anual:
-                                periodico.DiaDoAno = dto.DiaDoAno;
-                                break;
-                            case TipoPeriodicidade.Personalizado:
-                                lancamento.IntervaloDias = dto.IntervaloDias;
-                                break;
-                        }
-                    }
-                    break;
+                // TipoRecorrencia.Periodico removido - agora é parte de Recorrente
             }
         }
     }

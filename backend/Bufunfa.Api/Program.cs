@@ -10,7 +10,23 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configurar formatação de data para padrão brasileiro
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new Bufunfa.Api.Converters.BrazilianDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new Bufunfa.Api.Converters.BrazilianNullableDateTimeConverter());
+        
+        // Configurar para evitar ciclos de referência
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        
+        // Configurar cultura brasileira para formatação de números
+        var cultureInfo = new System.Globalization.CultureInfo("pt-BR");
+        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

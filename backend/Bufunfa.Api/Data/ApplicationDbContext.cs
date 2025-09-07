@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Bufunfa.Api.Models;
 using Bufunfa.Api.Services;
+using Bufunfa.Api.Converters;
 
 namespace Bufunfa.Api.Data
 {
@@ -22,13 +23,15 @@ namespace Bufunfa.Api.Data
         public DbSet<LancamentoEsporadico> LancamentosEsporadicos { get; set; }
         public DbSet<LancamentoRecorrente> LancamentosRecorrentes { get; set; }
         public DbSet<LancamentoParcelado> LancamentosParcelados { get; set; }
-        public DbSet<LancamentoPeriodico> LancamentosPeriodicos { get; set; }
+        // LancamentoPeriodico removido - funcionalidade integrada em LancamentoRecorrente
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<Rateio> Rateios { get; set; }
         public DbSet<FolhaMensal> FolhasMensais { get; set; }
         public DbSet<LancamentoFolha> LancamentosFolha { get; set; }
         public DbSet<ProvisionamentoMercado> ProvisionamentosMercado { get; set; }
         public DbSet<GastoRealMercado> GastosReaisMercado { get; set; }
+        public DbSet<MonthlySheetStatus> MonthlySheetStatuses { get; set; }
+        public DbSet<AccountRelationship> AccountRelationships { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,8 +90,7 @@ namespace Bufunfa.Api.Data
                 .HasDiscriminator<TipoRecorrencia>("TipoRecorrencia")
                 .HasValue<LancamentoEsporadico>(TipoRecorrencia.Esporadico)
                 .HasValue<LancamentoRecorrente>(TipoRecorrencia.Recorrente)
-                .HasValue<LancamentoParcelado>(TipoRecorrencia.Parcelado)
-                .HasValue<LancamentoPeriodico>(TipoRecorrencia.Periodico);
+                .HasValue<LancamentoParcelado>(TipoRecorrencia.Parcelado);
 
             // Configurações para campos decimais de Lançamento
             modelBuilder.Entity<Lancamento>()
@@ -189,6 +191,90 @@ namespace Bufunfa.Api.Data
             modelBuilder.Entity<Lancamento>()
                 .Property(l => l.DataCriacao)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Configurações para MonthlySheetStatus
+            modelBuilder.Entity<MonthlySheetStatus>()
+                .HasIndex(mss => new { mss.ContaId, mss.Ano, mss.Mes })
+                .IsUnique()
+                .HasDatabaseName("IX_MonthlySheetStatus_Conta_Ano_Mes");
+
+            modelBuilder.Entity<MonthlySheetStatus>()
+                .HasOne(mss => mss.Conta)
+                .WithMany(c => c.MonthlySheetStatuses)
+                .HasForeignKey(mss => mss.ContaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MonthlySheetStatus>()
+                .HasOne(mss => mss.UsuarioResponsavel)
+                .WithMany()
+                .HasForeignKey(mss => mss.UsuarioResponsavelId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configurações para AccountRelationship
+            modelBuilder.Entity<AccountRelationship>()
+                .HasIndex(ar => new { ar.ContaOrigemId, ar.ContaDestinoId, ar.TipoRelacionamento })
+                .IsUnique()
+                .HasDatabaseName("IX_AccountRelationship_Origem_Destino_Tipo");
+
+            modelBuilder.Entity<AccountRelationship>()
+                .HasOne(ar => ar.ContaOrigem)
+                .WithMany(c => c.RelacionamentosOrigem)
+                .HasForeignKey(ar => ar.ContaOrigemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AccountRelationship>()
+                .HasOne(ar => ar.ContaDestino)
+                .WithMany(c => c.RelacionamentosDestino)
+                .HasForeignKey(ar => ar.ContaDestinoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Configurações para FolhaMensal com MonthlySheetStatus
+            modelBuilder.Entity<FolhaMensal>()
+                .HasOne(f => f.MonthlySheetStatus)
+                .WithMany()
+                .HasForeignKey(f => f.MonthlySheetStatusId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configurações para Categoria
+            modelBuilder.Entity<Categoria>()
+                .Property(c => c.ValorProvisionadoMensal)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Categoria>()
+                .Property(c => c.DataCriacao)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            // Configurações para Lancamento com Categoria
+            modelBuilder.Entity<Lancamento>()
+                .HasOne(l => l.Categoria)
+                .WithMany(c => c.Lancamentos)
+                .HasForeignKey(l => l.CategoriaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configurar conversores UTC para todos os campos DateTime
+            ConfigureUtcDateTimeConverters(modelBuilder);
+        }
+
+        private void ConfigureUtcDateTimeConverters(ModelBuilder modelBuilder)
+        {
+            var utcConverter = new UtcDateTimeConverter();
+            var utcNullableConverter = new UtcNullableDateTimeConverter();
+
+            // Aplicar conversor UTC para todas as propriedades DateTime
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(utcConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(utcNullableConverter);
+                    }
+                }
+            }
         }
     }
 }

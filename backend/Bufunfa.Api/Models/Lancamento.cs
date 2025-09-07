@@ -14,8 +14,15 @@ namespace Bufunfa.Api.Models
     {
         Esporadico = 1,
         Recorrente = 2,
-        Parcelado = 3,
-        Periodico = 4
+        Parcelado = 3
+    }
+
+    public enum StatusLancamento
+    {
+        Provisional = 1,
+        Realizado = 2,
+        Cancelado = 3,
+        Quitado = 4
     }
 
     public enum TipoPeriodicidade
@@ -23,8 +30,12 @@ namespace Bufunfa.Api.Models
         Semanal = 1,
         Quinzenal = 2,
         Mensal = 3,
-        Anual = 4,
-        Personalizado = 5
+        Bimestral = 4,
+        Trimestral = 5,
+        Semestral = 6,
+        Anual = 7,
+        TodoDiaUtil = 8,
+        Personalizado = 9
     }
 
     public abstract class Lancamento
@@ -46,11 +57,13 @@ namespace Bufunfa.Api.Models
         [Required]
         public DateTime DataInicial { get; set; }
 
-        [Required]
         public TipoLancamento Tipo { get; set; }
 
         [Required]
         public TipoRecorrencia TipoRecorrencia { get; set; }
+
+        [Required]
+        public StatusLancamento Status { get; set; } = StatusLancamento.Provisional;
 
         // Data final para lançamentos recorrentes/parcelados/periódicos (opcional)
         public DateTime? DataFinal { get; set; }
@@ -63,9 +76,10 @@ namespace Bufunfa.Api.Models
         // Para lançamentos recorrentes - dia do mês (1-31)
         public int? DiaVencimento { get; set; }
 
-        // Para lançamentos periódicos
+        // Para lançamentos recorrentes com padrões específicos
         public TipoPeriodicidade? TipoPeriodicidade { get; set; }
-        public int? IntervaloDias { get; set; } // Para periodicidade personalizada (N em N dias)
+        public int? IntervaloDias { get; set; } // Para periodicidade personalizada (1-6 dias)
+        public bool AjustarDiaUtil { get; set; } = true; // Ajustar para próximo dia útil em finais de semana
 
         // Controle de processamento
         public bool ProcessarRetroativo { get; set; } = false;
@@ -103,7 +117,13 @@ namespace Bufunfa.Api.Models
         public DateTime Data => DataInicial;
 
         [NotMapped]
-        public bool EhRealizado => ValorReal.HasValue;
+        public bool EhRealizado => Status == StatusLancamento.Realizado;
+
+        [NotMapped]
+        public bool EhCancelado => Status == StatusLancamento.Cancelado;
+
+        [NotMapped]
+        public bool EhQuitado => Status == StatusLancamento.Quitado;
 
         // Métodos abstratos para implementação nas classes especializadas
         public abstract bool PodeSerProcessadoEm(DateTime data);

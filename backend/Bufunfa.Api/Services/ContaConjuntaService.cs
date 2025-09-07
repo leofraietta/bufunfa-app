@@ -163,9 +163,8 @@ namespace Bufunfa.Api.Services
                 // Reativar usuário
                 contaUsuarioExistente.Ativo = true;
                 contaUsuarioExistente.PercentualParticipacao = percentualParticipacao;
-                contaUsuarioExistente.PodeLer = podeLer;
-                contaUsuarioExistente.PodeEscrever = podeEscrever;
-                contaUsuarioExistente.PodeAdministrar = podeAdministrar;
+                contaUsuarioExistente.NivelPermissao = podeEscrever ? PermissionLevel.FullAccess : PermissionLevel.ViewOnly;
+                contaUsuarioExistente.EhAdministrador = podeAdministrar;
                 contaUsuarioExistente.DataVinculacao = DateTime.UtcNow;
                 contaUsuarioExistente.DataDesvinculacao = null;
 
@@ -179,9 +178,8 @@ namespace Bufunfa.Api.Services
                 ContaId = contaConjuntaId,
                 UsuarioId = usuarioId,
                 PercentualParticipacao = percentualParticipacao,
-                PodeLer = podeLer,
-                PodeEscrever = podeEscrever,
-                PodeAdministrar = podeAdministrar,
+                NivelPermissao = podeEscrever ? PermissionLevel.FullAccess : PermissionLevel.ViewOnly,
+                EhAdministrador = podeAdministrar,
                 EhProprietario = false,
                 Ativo = true,
                 DataVinculacao = DateTime.UtcNow
@@ -225,9 +223,10 @@ namespace Bufunfa.Api.Services
             if (contaUsuario == null)
                 throw new ArgumentException("Usuário não encontrado na conta");
 
-            if (podeLer.HasValue) contaUsuario.PodeLer = podeLer.Value;
-            if (podeEscrever.HasValue) contaUsuario.PodeEscrever = podeEscrever.Value;
-            if (podeAdministrar.HasValue) contaUsuario.PodeAdministrar = podeAdministrar.Value;
+            if (podeEscrever.HasValue) 
+                contaUsuario.NivelPermissao = podeEscrever.Value ? PermissionLevel.FullAccess : PermissionLevel.ViewOnly;
+            if (podeAdministrar.HasValue) 
+                contaUsuario.EhAdministrador = podeAdministrar.Value;
 
             await _context.SaveChangesAsync();
         }

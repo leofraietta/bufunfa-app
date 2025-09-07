@@ -21,13 +21,10 @@
     },
     {
       "name": "Angular: Debug",
-      "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "npm: start - frontend",
-      "url": "http://localhost:4200/",
-      "webRoot": "${workspaceFolder}/frontend",
-      "sourceMaps": true,
-      "userDataDir": "${workspaceFolder}/.vscode/chrome_debug_profile"
+      "type": "chrome",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/frontend"
     },
     {
       "name": "ng test",

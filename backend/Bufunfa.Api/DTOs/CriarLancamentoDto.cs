@@ -97,23 +97,7 @@ namespace Bufunfa.Api.DTOs
                     UsuarioId = UsuarioId,
                     DataCriacao = DateTime.UtcNow
                 },
-                TipoRecorrencia.Periodico => new LancamentoPeriodico
-                {
-                    Descricao = Descricao,
-                    ValorProvisionado = ValorProvisionado,
-                    ValorReal = ValorReal,
-                    DataInicial = DataInicial,
-                    Tipo = Tipo,
-                    TipoRecorrencia = TipoRecorrencia,
-                    DataFinal = DataFinal,
-                    TipoPeriodicidade = TipoPeriodicidade ?? Models.TipoPeriodicidade.Mensal,
-                    IntervaloDias = IntervaloDias,
-                    ProcessarRetroativo = ProcessarRetroativo,
-                    ContaId = ContaId,
-                    CategoriaId = CategoriaId,
-                    UsuarioId = UsuarioId,
-                    DataCriacao = DateTime.UtcNow
-                },
+                // TipoRecorrencia.Periodico removido - agora é parte de Recorrente
                 _ => throw new ArgumentException($"Tipo de recorrência não suportado: {TipoRecorrencia}")
             };
         }

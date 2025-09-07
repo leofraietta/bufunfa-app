@@ -82,8 +82,7 @@ namespace Bufunfa.Api.Services
                            l.ContaId == contaId && 
                            l.Ativo &&
                            (l.TipoRecorrencia == TipoRecorrencia.Recorrente ||
-                            l.TipoRecorrencia == TipoRecorrencia.Parcelado ||
-                            l.TipoRecorrencia == TipoRecorrencia.Periodico))
+                            l.TipoRecorrencia == TipoRecorrencia.Parcelado))
                 .ToListAsync();
 
             for (int i = 1; i <= mesesAFrente; i++)

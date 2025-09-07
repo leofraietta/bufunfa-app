@@ -48,7 +48,7 @@ namespace Bufunfa.Api.Services
             await _folhaAutomaticaService.CriarFolhaMensalInicialAsync(conta, usuarioId);
 
             // Obter a folha criada
-            var agora = DateTime.Now;
+            var agora = DateTime.UtcNow;
             var folha = await _folhaMensalService.ObterFolhaMensalAsync(usuarioId, conta.Id, agora.Year, agora.Month);
 
             return (conta, folha);
@@ -64,7 +64,7 @@ namespace Bufunfa.Api.Services
             var lancamentoEsporadico = _lancamentoFactory.CriarLancamentoEsporadico();
             lancamentoEsporadico.Descricao = "Compra no supermercado";
             lancamentoEsporadico.ValorProvisionado = 150.00m;
-            lancamentoEsporadico.DataInicial = DateTime.Today;
+            lancamentoEsporadico.DataInicial = DateTime.SpecifyKind(DateTime.Today, DateTimeKind.Utc);
             lancamentoEsporadico.Tipo = TipoLancamento.Despesa;
             lancamentoEsporadico.ContaId = contaId;
             lancamentoEsporadico.UsuarioId = usuarioId;
@@ -73,7 +73,7 @@ namespace Bufunfa.Api.Services
             await _context.SaveChangesAsync();
 
             // Obter folha do mês atual
-            var agora = DateTime.Now;
+            var agora = DateTime.UtcNow;
             var folha = await _folhaMensalService.ObterFolhaMensalAsync(usuarioId, contaId, agora.Year, agora.Month);
 
             // Adicionar à folha
@@ -91,7 +91,7 @@ namespace Bufunfa.Api.Services
             var lancamentoRecorrente = _lancamentoFactory.CriarLancamentoRecorrente();
             lancamentoRecorrente.Descricao = "Salário";
             lancamentoRecorrente.ValorProvisionado = 5000.00m;
-            lancamentoRecorrente.DataInicial = new DateTime(2024, 1, 5); // Todo dia 5
+            lancamentoRecorrente.DataInicial = DateTime.SpecifyKind(new DateTime(2024, 1, 5), DateTimeKind.Utc); // Todo dia 5
             lancamentoRecorrente.DiaVencimento = 5;
             lancamentoRecorrente.Tipo = TipoLancamento.Receita;
             lancamentoRecorrente.ContaId = contaId;
@@ -113,7 +113,7 @@ namespace Bufunfa.Api.Services
             var lancamentoParcelado = _lancamentoFactory.CriarLancamentoParcelado();
             lancamentoParcelado.Descricao = "Financiamento do carro";
             lancamentoParcelado.ValorProvisionado = 12000.00m; // Valor total
-            lancamentoParcelado.DataInicial = new DateTime(2024, 2, 15);
+            lancamentoParcelado.DataInicial = DateTime.SpecifyKind(new DateTime(2024, 2, 15), DateTimeKind.Utc);
             lancamentoParcelado.DiaVencimento = 15;
             lancamentoParcelado.QuantidadeParcelas = 24; // 24 meses
             lancamentoParcelado.Tipo = TipoLancamento.Despesa;
@@ -133,70 +133,66 @@ namespace Bufunfa.Api.Services
         /// Exemplo: Lançamento periódico semanal
         /// REGRA: Lançamentos periódicos semanais ocorrem toda semana no mesmo dia
         /// </summary>
-        public async Task<Lancamento> ExemploLancamentoPeriodicoSemanalAsync(int usuarioId, int contaId)
+        public async Task<Lancamento> ExemploLancamentoRecorrenteSemanalAsync(int usuarioId, int contaId)
         {
-            var lancamentoPeriodico = _lancamentoFactory.CriarLancamentoPeriodico();
-            lancamentoPeriodico.Descricao = "Academia - Mensalidade semanal";
-            lancamentoPeriodico.ValorProvisionado = 50.00m;
-            lancamentoPeriodico.DataInicial = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday); // Próxima segunda
-            lancamentoPeriodico.TipoPeriodicidade = TipoPeriodicidade.Semanal;
-            lancamentoPeriodico.Tipo = TipoLancamento.Despesa;
-            lancamentoPeriodico.ContaId = contaId;
-            lancamentoPeriodico.UsuarioId = usuarioId;
+            var lancamentoRecorrente = _lancamentoFactory.CriarLancamentoRecorrente();
+            lancamentoRecorrente.Descricao = "Academia - Mensalidade semanal";
+            lancamentoRecorrente.ValorProvisionado = 50.00m;
+            lancamentoRecorrente.DataInicial = DateTime.SpecifyKind(DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday), DateTimeKind.Utc); // Próxima segunda
+            lancamentoRecorrente.Tipo = TipoLancamento.Despesa;
+            lancamentoRecorrente.TipoPeriodicidade = TipoPeriodicidade.Semanal;
+            lancamentoRecorrente.ContaId = contaId;
+            lancamentoRecorrente.UsuarioId = usuarioId;
+            lancamentoRecorrente.DiaDaSemana = DayOfWeek.Monday; // Toda segunda-feira
 
-            if (lancamentoPeriodico is LancamentoPeriodico periodico)
-            {
-                periodico.DiaDaSemana = DayOfWeek.Monday; // Toda segunda-feira
-            }
-
-            _context.Lancamentos.Add(lancamentoPeriodico);
+            _context.Lancamentos.Add(lancamentoRecorrente);
             await _context.SaveChangesAsync();
 
-            return lancamentoPeriodico;
+            return lancamentoRecorrente;
         }
 
         /// <summary>
         /// Exemplo: Lançamento periódico quinzenal
         /// REGRA: Lançamentos quinzenais ocorrem a cada 15 dias
         /// </summary>
-        public async Task<Lancamento> ExemploLancamentoPeriodicoQuinzenalAsync(int usuarioId, int contaId)
+        public async Task<Lancamento> ExemploLancamentoRecorrenteQuinzenalAsync(int usuarioId, int contaId)
         {
-            var lancamentoPeriodico = _lancamentoFactory.CriarLancamentoPeriodico();
-            lancamentoPeriodico.Descricao = "Mesada quinzenal";
-            lancamentoPeriodico.ValorProvisionado = 200.00m;
-            lancamentoPeriodico.DataInicial = DateTime.Today;
-            lancamentoPeriodico.TipoPeriodicidade = TipoPeriodicidade.Quinzenal;
-            lancamentoPeriodico.Tipo = TipoLancamento.Despesa;
-            lancamentoPeriodico.ContaId = contaId;
-            lancamentoPeriodico.UsuarioId = usuarioId;
-            lancamentoPeriodico.DataFinal = DateTime.Today.AddMonths(6); // Por 6 meses
+            var lancamentoRecorrente = _lancamentoFactory.CriarLancamentoRecorrente();
+            lancamentoRecorrente.Descricao = "Mesada quinzenal";
+            lancamentoRecorrente.ValorProvisionado = 200.00m;
+            lancamentoRecorrente.DataInicial = DateTime.Today;
+            lancamentoRecorrente.TipoPeriodicidade = TipoPeriodicidade.Quinzenal;
+            lancamentoRecorrente.Tipo = TipoLancamento.Despesa;
+            lancamentoRecorrente.ContaId = contaId;
+            lancamentoRecorrente.UsuarioId = usuarioId;
+            lancamentoRecorrente.DataFinal = DateTime.Today.AddMonths(6); // Por 6 meses
 
-            _context.Lancamentos.Add(lancamentoPeriodico);
+            _context.Lancamentos.Add(lancamentoRecorrente);
             await _context.SaveChangesAsync();
 
-            return lancamentoPeriodico;
+            return lancamentoRecorrente;
         }
 
         /// <summary>
-        /// Exemplo: Lançamento periódico personalizado (a cada N dias)
+        /// Exemplo: Lançamento recorrente personalizado (a cada N dias)
         /// REGRA: Lançamentos personalizados ocorrem a cada N dias configurados
         /// </summary>
-        public async Task<Lancamento> ExemploLancamentoPeriodicoPersonalizadoAsync(int usuarioId, int contaId)
+        public async Task<Lancamento> ExemploLancamentoRecorrentePersonalizadoAsync(int usuarioId, int contaId)
         {
-            var lancamentoPeriodico = _lancamentoFactory.CriarLancamentoPeriodico();
-            lancamentoPeriodico.Descricao = "Suplemento vitamínico (a cada 10 dias)";
-            lancamentoPeriodico.ValorProvisionado = 25.00m;
-            lancamentoPeriodico.DataInicial = DateTime.Today;
-            lancamentoPeriodico.TipoPeriodicidade = TipoPeriodicidade.Personalizado;
-            lancamentoPeriodico.IntervaloDias = 10; // A cada 10 dias
-            lancamentoPeriodico.Tipo = TipoLancamento.Despesa;
-            lancamentoPeriodico.ContaId = contaId;
-            lancamentoPeriodico.UsuarioId = usuarioId;
+            var lancamentoRecorrente = _lancamentoFactory.CriarLancamentoRecorrente();
+            lancamentoRecorrente.Descricao = "Suplemento vitamínico (a cada 10 dias)";
+            lancamentoRecorrente.ValorProvisionado = 25.00m;
+            lancamentoRecorrente.DataInicial = DateTime.Today;
+            lancamentoRecorrente.TipoPeriodicidade = TipoPeriodicidade.Personalizado;
+            lancamentoRecorrente.IntervaloDias = 10; // A cada 10 dias
+            lancamentoRecorrente.Tipo = TipoLancamento.Despesa;
+            lancamentoRecorrente.ContaId = contaId;
+            lancamentoRecorrente.UsuarioId = usuarioId;
 
-            _context.Lancamentos.Add(lancamentoPeriodico);
+            _context.Lancamentos.Add(lancamentoRecorrente);
             await _context.SaveChangesAsync();
 
-            return lancamentoPeriodico;
+            return lancamentoRecorrente;
         }
 
         /// <summary>
@@ -231,7 +227,7 @@ namespace Bufunfa.Api.Services
             var financiamento = await ExemploLancamentoParceladoAsync(usuarioId, conta.Id);
             resultado.Add($"✅ Financiamento parcelado criado: {financiamento.Descricao}");
 
-            var academia = await ExemploLancamentoPeriodicoSemanalAsync(usuarioId, conta.Id);
+            var academia = await ExemploLancamentoRecorrenteSemanalAsync(usuarioId, conta.Id);
             resultado.Add($"✅ Academia semanal criada: {academia.Descricao}");
 
             // 3. Lançamento esporádico na folha atual

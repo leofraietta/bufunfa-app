@@ -15,10 +15,10 @@ namespace Bufunfa.Api.Models
         }
 
         /// <summary>
-        /// Data de apuração mensal da conta conjunta
+        /// Data de apuração mensal da conta conjunta (sempre último dia do mês conforme requisitos)
         /// </summary>
         [Required]
-        public int DiaApuracao { get; set; } = 1;
+        public int DiaApuracao { get; set; } = 31;
 
         /// <summary>
         /// Configuração para saldo positivo:
@@ -76,19 +76,12 @@ namespace Bufunfa.Api.Models
         }
 
         /// <summary>
-        /// Calcula a data de apuração para um determinado mês/ano
+        /// Calcula a data de apuração para um determinado mês/ano (sempre último dia do mês)
         /// </summary>
         public DateTime CalcularDataApuracao(int ano, int mes)
         {
-            var dataApuracao = new DateTime(ano, mes, DiaApuracao);
-            
-            // Se o dia de apuração é maior que o último dia do mês, usa o último dia
-            if (DiaApuracao > DateTime.DaysInMonth(ano, mes))
-            {
-                dataApuracao = new DateTime(ano, mes, DateTime.DaysInMonth(ano, mes));
-            }
-
-            return dataApuracao;
+            // Conforme requisitos refinados: sempre último dia do mês
+            return new DateTime(ano, mes, DateTime.DaysInMonth(ano, mes));
         }
 
         /// <summary>
@@ -135,16 +128,28 @@ namespace Bufunfa.Api.Models
         // Propriedades para compatibilidade com código existente
         
         /// <summary>
+        /// ID do usuário administrador da conta
+        /// </summary>
+        [NotMapped]
+        public int? UsuarioAdministradorId => ContaUsuarios?.FirstOrDefault(cu => cu.EhAdministrador && cu.Ativo)?.UsuarioId;
+
+        /// <summary>
+        /// Usuário administrador da conta
+        /// </summary>
+        [NotMapped]
+        public Usuario? UsuarioAdministrador => ContaUsuarios?.FirstOrDefault(cu => cu.EhAdministrador && cu.Ativo)?.Usuario;
+
+        /// <summary>
         /// ID do usuário criador da conta (para compatibilidade)
         /// </summary>
         [NotMapped]
-        public int? UsuarioCriadorId => ContaUsuarios?.FirstOrDefault(cu => cu.EhProprietario && cu.Ativo)?.UsuarioId;
+        public int? UsuarioCriadorId => UsuarioAdministradorId;
 
         /// <summary>
         /// Usuário criador da conta (para compatibilidade)
         /// </summary>
         [NotMapped]
-        public Usuario? UsuarioCriador => ContaUsuarios?.FirstOrDefault(cu => cu.EhProprietario && cu.Ativo)?.Usuario;
+        public Usuario? UsuarioCriador => UsuarioAdministrador;
 
         /// <summary>
         /// Simulação da propriedade Rateios para compatibilidade com código existente

@@ -33,8 +33,8 @@ interface LancamentoFolha {
   descricao: string;
   valorProvisionado: number;
   valorReal?: number;
-  dataPrevista: Date;
-  dataRealizacao?: Date;
+  dataPrevista: Date | string;
+  dataRealizacao?: Date | string;
   tipo: number;
   tipoRecorrencia: number;
   parcelaAtual?: number;
@@ -129,7 +129,7 @@ export class FolhaMensalComponent implements OnInit {
     this.isLoading = true;
     this.apiService.getFolhaMensal(this.contaSelecionada, this.anoAtual, this.mesAtual).subscribe({
       next: (folha) => {
-        this.folhaAtual = folha;
+        this.folhaAtual = this.processarDatasLancamentos(folha);
         this.aplicarFiltros();
         this.isLoading = false;
       },
@@ -315,6 +315,41 @@ export class FolhaMensalComponent implements OnInit {
 
   getNomeMes(mes: number): string {
     return this.mesesNomes[mes - 1] || 'Mês';
+  }
+
+  private processarDatasLancamentos(folha: FolhaMensal): FolhaMensal {
+    if (folha.lancamentosFolha) {
+      folha.lancamentosFolha = folha.lancamentosFolha.map(lancamento => ({
+        ...lancamento,
+        dataPrevista: this.converterParaDate(lancamento.dataPrevista),
+        dataRealizacao: lancamento.dataRealizacao ? this.converterParaDate(lancamento.dataRealizacao) : undefined
+      }));
+    }
+    return folha;
+  }
+
+  private converterParaDate(data: Date | string): Date {
+    if (data instanceof Date) {
+      return data;
+    }
+    
+    if (typeof data === 'string') {
+      // Tenta diferentes formatos de data
+      const date = new Date(data);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      
+      // Se o formato padrão não funcionar, tenta formato brasileiro dd/MM/yyyy
+      const partes = data.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (partes) {
+        const [, dia, mes, ano] = partes;
+        return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+      }
+    }
+    
+    // Fallback para data atual se não conseguir converter
+    return new Date();
   }
 }
 

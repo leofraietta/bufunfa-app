@@ -165,7 +165,7 @@ namespace Bufunfa.Api.Services
             if (lancamentoEsporadico.TipoRecorrencia != TipoRecorrencia.Esporadico)
                 throw new ArgumentException("Apenas lançamentos esporádicos podem ser adicionados diretamente à folha");
 
-            var dataInicioFolha = new DateTime(folha.Ano, folha.Mes, 1);
+            var dataInicioFolha = DateTime.SpecifyKind(new DateTime(folha.Ano, folha.Mes, 1), DateTimeKind.Utc);
             var dataFimFolha = dataInicioFolha.AddMonths(1).AddDays(-1);
 
             if (lancamentoEsporadico.DataInicial.Date < dataInicioFolha || lancamentoEsporadico.DataInicial.Date > dataFimFolha)

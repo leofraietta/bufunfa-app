@@ -69,12 +69,12 @@ namespace Bufunfa.Api.Services
         /// </summary>
         public bool DeveProcessarLancamentoNaFolha(Lancamento lancamento, FolhaMensal folha)
         {
-            var dataInicioFolha = new DateTime(folha.Ano, folha.Mes, 1);
+            var dataInicioFolha = DateTime.SpecifyKind(new DateTime(folha.Ano, folha.Mes, 1), DateTimeKind.Utc);
             var dataFimFolha = dataInicioFolha.AddMonths(1).AddDays(-1);
 
             // Verifica se há interseção entre o período do lançamento e o período da folha
             var lancamentoInicia = lancamento.DataInicial.Date;
-            var lancamentoTermina = lancamento.DataFinal?.Date ?? DateTime.MaxValue.Date;
+            var lancamentoTermina = lancamento.DataFinal?.Date ?? DateTime.SpecifyKind(DateTime.MaxValue.Date, DateTimeKind.Utc);
 
             return lancamentoInicia <= dataFimFolha && lancamentoTermina >= dataInicioFolha;
         }
@@ -85,7 +85,7 @@ namespace Bufunfa.Api.Services
         /// </summary>
         public IEnumerable<DateTime> ObterDatasVencimentoNaFolha(Lancamento lancamento, FolhaMensal folha)
         {
-            var dataInicioFolha = new DateTime(folha.Ano, folha.Mes, 1);
+            var dataInicioFolha = DateTime.SpecifyKind(new DateTime(folha.Ano, folha.Mes, 1), DateTimeKind.Utc);
             var dataFimFolha = dataInicioFolha.AddMonths(1).AddDays(-1);
 
             return lancamento.ObterDatasVencimento(dataInicioFolha, dataFimFolha);
@@ -146,13 +146,7 @@ namespace Bufunfa.Api.Services
                     }
                     break;
 
-                case TipoRecorrencia.Periodico:
-                    if (lancamento is LancamentoPeriodico lancamentoPeriodico)
-                    {
-                        var tipoPeriodicidade = ObterDescricaoPeriodicidade(lancamentoPeriodico);
-                        descricao += $" - {tipoPeriodicidade}";
-                    }
-                    break;
+                // Periodico foi removido - agora é parte de Recorrente
 
                 case TipoRecorrencia.Recorrente:
                     descricao += $" - Recorrente (dia {lancamento.DiaVencimento})";
@@ -199,20 +193,20 @@ namespace Bufunfa.Api.Services
         }
 
         /// <summary>
-        /// Obtém descrição da periodicidade para lançamentos periódicos
+        /// Obtém descrição da periodicidade para lançamentos recorrentes
         /// </summary>
-        private string ObterDescricaoPeriodicidade(LancamentoPeriodico lancamentoPeriodico)
+        private string ObterDescricaoPeriodicidade(LancamentoRecorrente lancamentoRecorrente)
         {
-            if (!lancamentoPeriodico.TipoPeriodicidade.HasValue)
-                return "Periódico";
+            if (!lancamentoRecorrente.TipoPeriodicidade.HasValue)
+                return "Recorrente";
 
-            return lancamentoPeriodico.TipoPeriodicidade.Value switch
+            return lancamentoRecorrente.TipoPeriodicidade.Value switch
             {
-                TipoPeriodicidade.Semanal => $"Semanal ({lancamentoPeriodico.DiaDaSemana})",
+                TipoPeriodicidade.Semanal => $"Semanal ({lancamentoRecorrente.DiaDaSemana})",
                 TipoPeriodicidade.Quinzenal => "Quinzenal",
-                TipoPeriodicidade.Mensal => $"Mensal (dia {lancamentoPeriodico.DiaVencimento})",
-                TipoPeriodicidade.Anual => $"Anual (dia {lancamentoPeriodico.DiaDoAno} do ano)",
-                TipoPeriodicidade.Personalizado => $"A cada {lancamentoPeriodico.IntervaloDias} dias",
+                TipoPeriodicidade.Mensal => $"Mensal (dia {lancamentoRecorrente.DiaVencimento})",
+                TipoPeriodicidade.Anual => $"Anual (dia {lancamentoRecorrente.DiaDoAno} do ano)",
+                TipoPeriodicidade.Personalizado => $"A cada {lancamentoRecorrente.IntervaloDias} dias",
                 _ => "Periódico"
             };
         }

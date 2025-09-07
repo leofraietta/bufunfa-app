@@ -57,9 +57,8 @@ namespace Bufunfa.Api.Services
                 UsuarioId = usuarioCriadorId,
                 EhProprietario = true,
                 PercentualParticipacao = 60.00m, // 60% de participação
-                PodeLer = true,
-                PodeEscrever = true,
-                PodeAdministrar = true,
+                NivelPermissao = PermissionLevel.FullAccess,
+                EhAdministrador = true,
                 Ativo = true
             };
 

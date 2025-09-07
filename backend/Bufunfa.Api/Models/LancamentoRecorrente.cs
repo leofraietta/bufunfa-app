@@ -4,7 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Bufunfa.Api.Models
 {
     /// <summary>
-    /// Lançamento recorrente - ocorre todo dia X de cada mês
+    /// Lançamento recorrente - ocorre com periodicidade configurável
+    /// Pode ser mensal (todo dia X), semanal, quinzenal, etc.
     /// Pode ter data final opcional para encerrar a recorrência
     /// </summary>
     public class LancamentoRecorrente : Lancamento
@@ -14,8 +15,14 @@ namespace Bufunfa.Api.Models
             TipoRecorrencia = TipoRecorrencia.Recorrente;
         }
 
+        // Propriedades específicas para periodicidade expandida
+        public DayOfWeek? DiaDaSemana { get; set; }
+        public int? DiaDoAno { get; set; }
+
         // Nota: Este lançamento usa as propriedades da classe base:
-        // - DiaVencimento (obrigatório para recorrentes)
+        // - DiaVencimento (para periodicidade mensal)
+        // - TipoPeriodicidade (tipo de recorrência)
+        // - IntervaloDias (para periodicidade personalizada)
 
         /// <summary>
         /// Verifica se o lançamento pode ser processado em uma determinada data
@@ -30,10 +37,39 @@ namespace Bufunfa.Api.Models
             if (DataFinal.HasValue && data.Date > DataFinal.Value.Date)
                 return false;
 
-            // Deve ser no dia correto do mês
-            return data.Day == DiaVencimento || 
-                   (DiaVencimento > DateTime.DaysInMonth(data.Year, data.Month) && 
-                    data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            // Verifica baseado no tipo de periodicidade
+            if (!TipoPeriodicidade.HasValue)
+            {
+                // Recorrência mensal tradicional
+                return data.Day == DiaVencimento || 
+                       (DiaVencimento > DateTime.DaysInMonth(data.Year, data.Month) && 
+                        data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            }
+
+            var tipoPeriodicidade = TipoPeriodicidade.Value;
+            
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Semanal)
+                return DiaDaSemana.HasValue && data.DayOfWeek == DiaDaSemana.Value;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Quinzenal)
+                return VerificarPeriodicidadeQuinzenal(data);
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Mensal)
+                return data.Day == DiaVencimento || 
+                       (DiaVencimento > DateTime.DaysInMonth(data.Year, data.Month) && 
+                        data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Bimestral)
+                return VerificarPeriodicidadeBimestral(data);
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Trimestral)
+                return VerificarPeriodicidadeTrimestral(data);
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Semestral)
+                return VerificarPeriodicidadeSemestral(data);
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Anual)
+                return DiaDoAno.HasValue && data.DayOfYear == DiaDoAno.Value;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.TodoDiaUtil)
+                return VerificarDiaUtil(data);
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Personalizado)
+                return VerificarPeriodicidadePersonalizada(data);
+                
+            return false;
         }
 
         /// <summary>
@@ -91,12 +127,117 @@ namespace Bufunfa.Api.Models
         /// </summary>
         public override bool EhValido()
         {
-            return TipoRecorrencia == TipoRecorrencia.Recorrente &&
-                   DiaVencimento >= 1 && DiaVencimento <= 31 &&
-                   !QuantidadeParcelas.HasValue && // Recorrentes não têm parcelas
-                   !TipoPeriodicidade.HasValue && // Recorrentes não têm periodicidade
-                   !IntervaloDias.HasValue &&
-                   (DataFinal == null || DataFinal >= DataInicial); // Data final deve ser posterior à inicial
+            if (TipoRecorrencia != TipoRecorrencia.Recorrente)
+                return false;
+
+            if (QuantidadeParcelas.HasValue) // Recorrentes não têm parcelas
+                return false;
+
+            if (DataFinal.HasValue && DataFinal < DataInicial) // Data final deve ser posterior à inicial
+                return false;
+
+            // Validação baseada no tipo de periodicidade
+            if (!TipoPeriodicidade.HasValue)
+            {
+                // Recorrência mensal tradicional
+                return DiaVencimento >= 1 && DiaVencimento <= 31;
+            }
+
+            var tipoPeriodicidade = TipoPeriodicidade.Value;
+            
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Semanal)
+                return DiaDaSemana.HasValue;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Quinzenal)
+                return true; // Quinzenal não precisa de parâmetros extras
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Mensal)
+                return DiaVencimento >= 1 && DiaVencimento <= 31;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Bimestral)
+                return DiaVencimento >= 1 && DiaVencimento <= 31;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Trimestral)
+                return DiaVencimento >= 1 && DiaVencimento <= 31;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Semestral)
+                return DiaVencimento >= 1 && DiaVencimento <= 31;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Anual)
+                return DiaDoAno >= 1 && DiaDoAno <= 366;
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.TodoDiaUtil)
+                return true; // Não precisa de parâmetros extras
+            if (tipoPeriodicidade == Models.TipoPeriodicidade.Personalizado)
+                return IntervaloDias >= 1 && IntervaloDias <= 365;
+                
+            return false;
+        }
+
+        /// <summary>
+        /// Verifica periodicidade quinzenal (a cada 15 dias)
+        /// </summary>
+        private bool VerificarPeriodicidadeQuinzenal(DateTime data)
+        {
+            var diasDiferenca = (data.Date - DataInicial.Date).Days;
+            return diasDiferenca >= 0 && diasDiferenca % 15 == 0;
+        }
+
+        /// <summary>
+        /// Verifica periodicidade personalizada (a cada N dias)
+        /// </summary>
+        private bool VerificarPeriodicidadePersonalizada(DateTime data)
+        {
+            if (!IntervaloDias.HasValue) return false;
+            
+            var diasDiferenca = (data.Date - DataInicial.Date).Days;
+            return diasDiferenca >= 0 && diasDiferenca % IntervaloDias.Value == 0;
+        }
+
+        /// <summary>
+        /// Verifica periodicidade bimestral (a cada 2 meses)
+        /// </summary>
+        private bool VerificarPeriodicidadeBimestral(DateTime data)
+        {
+            if (!DiaVencimento.HasValue) return false;
+            
+            var mesesDiferenca = ((data.Year - DataInicial.Year) * 12) + data.Month - DataInicial.Month;
+            var diaCorreto = data.Day == DiaVencimento.Value || 
+                           (DiaVencimento.Value > DateTime.DaysInMonth(data.Year, data.Month) && 
+                            data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            
+            return mesesDiferenca >= 0 && mesesDiferenca % 2 == 0 && diaCorreto;
+        }
+
+        /// <summary>
+        /// Verifica periodicidade trimestral (a cada 3 meses)
+        /// </summary>
+        private bool VerificarPeriodicidadeTrimestral(DateTime data)
+        {
+            if (!DiaVencimento.HasValue) return false;
+            
+            var mesesDiferenca = ((data.Year - DataInicial.Year) * 12) + data.Month - DataInicial.Month;
+            var diaCorreto = data.Day == DiaVencimento.Value || 
+                           (DiaVencimento.Value > DateTime.DaysInMonth(data.Year, data.Month) && 
+                            data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            
+            return mesesDiferenca >= 0 && mesesDiferenca % 3 == 0 && diaCorreto;
+        }
+
+        /// <summary>
+        /// Verifica periodicidade semestral (a cada 6 meses)
+        /// </summary>
+        private bool VerificarPeriodicidadeSemestral(DateTime data)
+        {
+            if (!DiaVencimento.HasValue) return false;
+            
+            var mesesDiferenca = ((data.Year - DataInicial.Year) * 12) + data.Month - DataInicial.Month;
+            var diaCorreto = data.Day == DiaVencimento.Value || 
+                           (DiaVencimento.Value > DateTime.DaysInMonth(data.Year, data.Month) && 
+                            data.Day == DateTime.DaysInMonth(data.Year, data.Month));
+            
+            return mesesDiferenca >= 0 && mesesDiferenca % 6 == 0 && diaCorreto;
+        }
+
+        /// <summary>
+        /// Verifica se é dia útil (segunda a sexta-feira)
+        /// </summary>
+        private bool VerificarDiaUtil(DateTime data)
+        {
+            return data.DayOfWeek >= DayOfWeek.Monday && data.DayOfWeek <= DayOfWeek.Friday;
         }
 
         /// <summary>

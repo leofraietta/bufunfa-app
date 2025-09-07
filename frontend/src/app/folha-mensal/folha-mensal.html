@@ -149,11 +149,11 @@
               <div class="datas">
                 <div class="data-prevista">
                   <mat-icon>schedule</mat-icon>
-                  {{ lancamento.dataPrevista | date:'dd/MM' }}
+                  {{ lancamento.dataPrevista | date:'dd/MM/yyyy':'pt-BR' }}
                 </div>
                 <div class="data-realizacao" *ngIf="lancamento.dataRealizacao">
                   <mat-icon>check_circle</mat-icon>
-                  {{ lancamento.dataRealizacao | date:'dd/MM' }}
+                  {{ lancamento.dataRealizacao | date:'dd/MM/yyyy':'pt-BR' }}
                 </div>
               </div>
             </div>

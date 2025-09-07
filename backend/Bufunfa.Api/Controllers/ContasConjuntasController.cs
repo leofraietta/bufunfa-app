@@ -76,9 +76,8 @@ namespace Bufunfa.Api.Controllers
                 UsuarioId = userId,
                 EhProprietario = true,
                 PercentualParticipacao = 100.00m,
-                PodeLer = true,
-                PodeEscrever = true,
-                PodeAdministrar = true
+                NivelPermissao = PermissionLevel.FullAccess,
+                EhAdministrador = true
             };
             
             _context.ContaUsuarios.Add(contaUsuario);

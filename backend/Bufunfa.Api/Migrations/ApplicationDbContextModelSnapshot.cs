@@ -22,6 +22,48 @@ namespace Bufunfa.Api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Bufunfa.Api.Models.AccountRelationship", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ContaDestinoId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContaOrigemId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CriadoPorUsuarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataDesativacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TipoRelacionamento")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContaDestinoId");
+
+                    b.HasIndex("CriadoPorUsuarioId");
+
+                    b.HasIndex("ContaOrigemId", "ContaDestinoId", "TipoRelacionamento")
+                        .IsUnique()
+                        .HasDatabaseName("IX_AccountRelationship_Origem_Destino_Tipo");
+
+                    b.ToTable("AccountRelationships");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.Categoria", b =>
                 {
                     b.Property<int>("Id")
@@ -29,6 +71,17 @@ namespace Bufunfa.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Descricao")
                         .IsRequired()
@@ -42,6 +95,9 @@ namespace Bufunfa.Api.Migrations
 
                     b.Property<int>("UsuarioId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("ValorProvisionadoMensal")
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -111,6 +167,12 @@ namespace Bufunfa.Api.Migrations
                     b.Property<int>("ContaId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("ConvidadoPorUsuarioId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DataConvite")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("DataDesvinculacao")
                         .HasColumnType("timestamp with time zone");
 
@@ -119,25 +181,24 @@ namespace Bufunfa.Api.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<bool>("EhAdministrador")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("EhProprietario")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("NivelPermissao")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("PercentualParticipacao")
                         .HasColumnType("decimal(5,2)");
-
-                    b.Property<bool>("PodeAdministrar")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PodeEscrever")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("PodeLer")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("UsuarioId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ConvidadoPorUsuarioId");
 
                     b.HasIndex("UsuarioId");
 
@@ -176,6 +237,9 @@ namespace Bufunfa.Api.Migrations
                     b.Property<int>("Mes")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("MonthlySheetStatusId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("SaldoFinalProvisionado")
                         .HasColumnType("decimal(18,2)");
 
@@ -207,6 +271,8 @@ namespace Bufunfa.Api.Migrations
 
                     b.HasIndex("ContaId");
 
+                    b.HasIndex("MonthlySheetStatusId");
+
                     b.HasIndex("UsuarioId", "ContaId", "Ano", "Mes")
                         .IsUnique()
                         .HasDatabaseName("IX_FolhaMensal_Usuario_Conta_Ano_Mes");
@@ -221,6 +287,9 @@ namespace Bufunfa.Api.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AjustarDiaUtil")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("Ativo")
                         .HasColumnType("boolean");
@@ -263,6 +332,9 @@ namespace Bufunfa.Api.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int?>("QuantidadeParcelas")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<int>("Tipo")
@@ -367,6 +439,52 @@ namespace Bufunfa.Api.Migrations
                     b.HasIndex("LancamentoOrigemId");
 
                     b.ToTable("LancamentosFolha");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.MonthlySheetStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Ano")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContaId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DataAtualizacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataFechamento")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DataReabertura")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Mes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioResponsavelId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioResponsavelId");
+
+                    b.HasIndex("ContaId", "Ano", "Mes")
+                        .IsUnique()
+                        .HasDatabaseName("IX_MonthlySheetStatus_Conta_Ano_Mes");
+
+                    b.ToTable("MonthlySheetStatuses");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Rateio", b =>
@@ -710,7 +828,7 @@ namespace Bufunfa.Api.Migrations
                     b.HasDiscriminator().HasValue(3);
                 });
 
-            modelBuilder.Entity("Bufunfa.Api.Models.LancamentoPeriodico", b =>
+            modelBuilder.Entity("Bufunfa.Api.Models.LancamentoRecorrente", b =>
                 {
                     b.HasBaseType("Bufunfa.Api.Models.Lancamento");
 
@@ -720,14 +838,34 @@ namespace Bufunfa.Api.Migrations
                     b.Property<int?>("DiaDoAno")
                         .HasColumnType("integer");
 
-                    b.HasDiscriminator().HasValue(4);
+                    b.HasDiscriminator().HasValue(2);
                 });
 
-            modelBuilder.Entity("Bufunfa.Api.Models.LancamentoRecorrente", b =>
+            modelBuilder.Entity("Bufunfa.Api.Models.AccountRelationship", b =>
                 {
-                    b.HasBaseType("Bufunfa.Api.Models.Lancamento");
+                    b.HasOne("Bufunfa.Api.Models.Conta", "ContaDestino")
+                        .WithMany("RelacionamentosDestino")
+                        .HasForeignKey("ContaDestinoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasDiscriminator().HasValue(2);
+                    b.HasOne("Bufunfa.Api.Models.Conta", "ContaOrigem")
+                        .WithMany("RelacionamentosOrigem")
+                        .HasForeignKey("ContaOrigemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Usuario", "CriadoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("CriadoPorUsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ContaDestino");
+
+                    b.Navigation("ContaOrigem");
+
+                    b.Navigation("CriadoPorUsuario");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Categoria", b =>
@@ -749,6 +887,10 @@ namespace Bufunfa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Bufunfa.Api.Models.Usuario", "ConvidadoPorUsuario")
+                        .WithMany()
+                        .HasForeignKey("ConvidadoPorUsuarioId");
+
                     b.HasOne("Bufunfa.Api.Models.Usuario", "Usuario")
                         .WithMany("ContaUsuarios")
                         .HasForeignKey("UsuarioId")
@@ -756,6 +898,8 @@ namespace Bufunfa.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Conta");
+
+                    b.Navigation("ConvidadoPorUsuario");
 
                     b.Navigation("Usuario");
                 });
@@ -768,6 +912,11 @@ namespace Bufunfa.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Bufunfa.Api.Models.MonthlySheetStatus", "MonthlySheetStatus")
+                        .WithMany()
+                        .HasForeignKey("MonthlySheetStatusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Bufunfa.Api.Models.Usuario", "Usuario")
                         .WithMany("FolhasMensais")
                         .HasForeignKey("UsuarioId")
@@ -776,14 +925,17 @@ namespace Bufunfa.Api.Migrations
 
                     b.Navigation("Conta");
 
+                    b.Navigation("MonthlySheetStatus");
+
                     b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Lancamento", b =>
                 {
                     b.HasOne("Bufunfa.Api.Models.Categoria", "Categoria")
-                        .WithMany()
-                        .HasForeignKey("CategoriaId");
+                        .WithMany("Lancamentos")
+                        .HasForeignKey("CategoriaId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Bufunfa.Api.Models.Conta", "Conta")
                         .WithMany("Lancamentos")
@@ -827,6 +979,25 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("FolhaMensal");
 
                     b.Navigation("LancamentoOrigem");
+                });
+
+            modelBuilder.Entity("Bufunfa.Api.Models.MonthlySheetStatus", b =>
+                {
+                    b.HasOne("Bufunfa.Api.Models.Conta", "Conta")
+                        .WithMany("MonthlySheetStatuses")
+                        .HasForeignKey("ContaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bufunfa.Api.Models.Usuario", "UsuarioResponsavel")
+                        .WithMany()
+                        .HasForeignKey("UsuarioResponsavelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conta");
+
+                    b.Navigation("UsuarioResponsavel");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.Rateio", b =>
@@ -896,6 +1067,11 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("ContaCorrenteResponsavel");
                 });
 
+            modelBuilder.Entity("Bufunfa.Api.Models.Categoria", b =>
+                {
+                    b.Navigation("Lancamentos");
+                });
+
             modelBuilder.Entity("Bufunfa.Api.Models.Conta", b =>
                 {
                     b.Navigation("ContaUsuarios");
@@ -903,6 +1079,12 @@ namespace Bufunfa.Api.Migrations
                     b.Navigation("FolhasMensais");
 
                     b.Navigation("Lancamentos");
+
+                    b.Navigation("MonthlySheetStatuses");
+
+                    b.Navigation("RelacionamentosDestino");
+
+                    b.Navigation("RelacionamentosOrigem");
                 });
 
             modelBuilder.Entity("Bufunfa.Api.Models.FolhaMensal", b =>
