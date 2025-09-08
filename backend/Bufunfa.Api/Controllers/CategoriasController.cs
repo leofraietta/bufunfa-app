@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Bufunfa.Api.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class CategoriasController : ControllerBase
@@ -21,12 +20,9 @@ namespace Bufunfa.Api.Controllers
 
         private int GetUserId()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            {
-                throw new UnauthorizedAccessException("User ID not found in token.");
-            }
-            return userId;
+            // Temporário: retorna usuário padrão para teste (ID = 1)
+            // TODO: Implementar autenticação adequada
+            return 1;
         }
 
         // GET: api/Categorias

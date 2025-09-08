@@ -1,58 +1,174 @@
 <div class="dashboard-container">
-  <mat-toolbar color="primary">
-    <span>Bufunfa - Dashboard</span>
-    <span class="spacer"></span>
-    <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="User menu">
-      <mat-icon>account_circle</mat-icon>
-    </button>
-    <mat-menu #menu="matMenu">
-      <button mat-menu-item (click)="logout()">
-        <mat-icon>logout</mat-icon>
-        <span>Sair</span>
+  <div class="header">
+    <h1>Dashboard</h1>
+    <div class="header-actions">
+      <button mat-icon-button (click)="refreshData()" [disabled]="isLoading">
+        <mat-icon>refresh</mat-icon>
       </button>
-    </mat-menu>
-  </mat-toolbar>
+      <div class="user-info">
+        <span>Bem-vindo, {{ user.name || 'Usuário' }}!</span>
+        <button mat-icon-button [matMenuTriggerFor]="userMenu">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Sair</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+  </div>
 
-  <div class="content">
-    <mat-card class="welcome-card">
-      <mat-card-title>Bem-vindo, {{ userName }}!</mat-card-title>
-      <mat-card-content>
-        <p>Aqui você pode gerenciar suas finanças.</p>
-      </mat-card-content>
-    </mat-card>
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>Carregando dados do dashboard...</p>
+  </div>
 
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon class="error-icon">error</mat-icon>
+    <h3>Erro ao carregar dados</h3>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="refreshData()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="dashboard-content" *ngIf="!isLoading && !error">
     <div class="summary-cards">
-      <mat-card>
+      <mat-card class="summary-card balance">
         <mat-card-header>
           <mat-card-title>Saldo Total</mat-card-title>
+          <mat-icon>account_balance_wallet</mat-icon>
         </mat-card-header>
         <mat-card-content>
-          <h2>R$ {{ totalBalance | number:".2-2" }}</h2>
+          <div class="amount" [ngClass]="{'positive': totalBalance >= 0, 'negative': totalBalance < 0}">
+            {{ totalBalance | currency:'BRL':'symbol':'1.2-2' }}
+          </div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card>
+      <mat-card class="summary-card income">
         <mat-card-header>
           <mat-card-title>Receitas do Mês</mat-card-title>
+          <mat-icon>trending_up</mat-icon>
         </mat-card-header>
         <mat-card-content>
-          <h2 class="income">R$ {{ monthlyIncome | number:".2-2" }}</h2>
+          <div class="amount positive">{{ monthlyIncome | currency:'BRL':'symbol':'1.2-2' }}</div>
         </mat-card-content>
       </mat-card>
 
-      <mat-card>
+      <mat-card class="summary-card expenses">
         <mat-card-header>
           <mat-card-title>Despesas do Mês</mat-card-title>
+          <mat-icon>trending_down</mat-icon>
         </mat-card-header>
         <mat-card-content>
-          <h2 class="expense">R$ {{ monthlyExpense | number:".2-2" }}</h2>
+          <div class="amount negative">{{ monthlyExpenses | currency:'BRL':'symbol':'1.2-2' }}</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card projection">
+        <mat-card-header>
+          <mat-card-title>Projeção do Saldo</mat-card-title>
+          <mat-icon>timeline</mat-icon>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="amount" [ngClass]="{'positive': projectedBalance >= 0, 'negative': projectedBalance < 0}">
+            {{ projectedBalance | currency:'BRL':'symbol':'1.2-2' }}
+          </div>
         </mat-card-content>
       </mat-card>
     </div>
 
-    <!-- Adicionar gráficos e outras informações aqui -->
+    <!-- Upcoming Transactions -->
+    <div class="upcoming-section" *ngIf="upcomingTransactions.length > 0">
+      <mat-card class="upcoming-card">
+        <mat-card-header>
+          <mat-card-title>Próximos Vencimentos</mat-card-title>
+          <mat-icon>schedule</mat-icon>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="upcoming-list">
+            <div class="upcoming-item" *ngFor="let transaction of upcomingTransactions.slice(0, 5)">
+              <div class="transaction-info">
+                <span class="description">{{ transaction.descricao }}</span>
+                <span class="type">{{ getTipoLancamentoText(transaction.tipo) }}</span>
+              </div>
+              <div class="transaction-details">
+                <span class="amount" [ngClass]="{'positive': transaction.tipo === 1, 'negative': transaction.tipo === 2}">
+                  {{ (transaction.valorProvisionado || transaction.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+                <span class="date">{{ getFormattedDate(transaction.dataInicial) }}</span>
+              </div>
+            </div>
+          </div>
+          <button mat-button routerLink="/lancamentos" *ngIf="upcomingTransactions.length > 5">
+            Ver todos os {{ upcomingTransactions.length }} lançamentos
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
 
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <mat-card class="quick-actions-card">
+        <mat-card-header>
+          <mat-card-title>Ações Rápidas</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="actions-grid">
+            <button mat-raised-button color="primary" routerLink="/lancamentos">
+              <mat-icon>add</mat-icon>
+              Novo Lançamento
+            </button>
+            <button mat-raised-button color="accent" routerLink="/folha-mensal">
+              <mat-icon>calendar_month</mat-icon>
+              Folha Mensal
+            </button>
+            <button mat-raised-button routerLink="/contas">
+              <mat-icon>account_balance</mat-icon>
+              Gerenciar Contas
+            </button>
+            <button mat-raised-button routerLink="/provisionamento">
+              <mat-icon>shopping_cart</mat-icon>
+              Provisionamento
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Welcome Message for New Users -->
+    <div class="welcome-section" *ngIf="totalBalance === 0 && monthlyIncome === 0 && monthlyExpenses === 0">
+      <mat-card class="welcome-card">
+        <mat-card-header>
+          <mat-card-title>Bem-vindo ao Bufunfa!</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>Olá, {{ user.name || 'Usuário' }}! Para começar a usar o Bufunfa, siga estes passos:</p>
+          <div class="onboarding-steps">
+            <div class="step">
+              <mat-icon>looks_one</mat-icon>
+              <span>Crie suas contas (Conta Corrente, Cartão de Crédito)</span>
+              <button mat-button color="primary" routerLink="/contas">Criar Contas</button>
+            </div>
+            <div class="step">
+              <mat-icon>looks_two</mat-icon>
+              <span>Configure categorias para organizar seus gastos</span>
+              <button mat-button color="primary" routerLink="/provisionamento">Criar Categorias</button>
+            </div>
+            <div class="step">
+              <mat-icon>looks_3</mat-icon>
+              <span>Adicione seus lançamentos (receitas e despesas)</span>
+              <button mat-button color="primary" routerLink="/lancamentos">Criar Lançamentos</button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 </div>
-
-

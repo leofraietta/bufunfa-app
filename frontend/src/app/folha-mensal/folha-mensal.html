@@ -1,191 +1,226 @@
 <div class="folha-mensal-container">
-  <!-- Cabeçalho com navegação de mês -->
-  <mat-card class="header-card">
-    <mat-card-header>
-      <mat-card-title class="title-section">
-        <div class="month-navigation">
-          <button mat-icon-button (click)="navegarMes(-1)">
-            <mat-icon>chevron_left</mat-icon>
-          </button>
-          
-          <div class="month-selector">
-            <h2>{{ getNomeMes(mesAtual) }} {{ anoAtual }}</h2>
-            <button mat-button (click)="abrirSeletorMes()" class="month-button">
-              <mat-icon>calendar_today</mat-icon>
-              Alterar Mês
-            </button>
-          </div>
-          
-          <button mat-icon-button (click)="navegarMes(1)">
-            <mat-icon>chevron_right</mat-icon>
-          </button>
-        </div>
-      </mat-card-title>
-    </mat-card-header>
-  </mat-card>
-
-  <!-- Seletor de Conta -->
-  <mat-card class="conta-selector-card">
-    <mat-card-content>
-      <mat-form-field appearance="outline" class="conta-select">
-        <mat-label>Selecionar Conta</mat-label>
+  <div class="header">
+    <h1>Folha Mensal</h1>
+    <div class="header-controls">
+      <mat-form-field appearance="outline" class="mes-selector">
+        <mat-label>Mês/Ano</mat-label>
+        <mat-select [(value)]="mesAnoSelecionado" (selectionChange)="onMesAnoChange()">
+          <mat-option *ngFor="let mesAno of mesesDisponiveis" [value]="mesAno.value">
+            {{ mesAno.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      
+      <mat-form-field appearance="outline" class="conta-selector">
+        <mat-label>Conta</mat-label>
         <mat-select [(value)]="contaSelecionada" (selectionChange)="onContaChange()">
           <mat-option *ngFor="let conta of contas" [value]="conta.id">
             {{ conta.nome }}
           </mat-option>
         </mat-select>
       </mat-form-field>
-    </mat-card-content>
-  </mat-card>
-
-  <!-- Resumo de Saldos -->
-  <div class="saldos-grid" *ngIf="folhaAtual">
-    <mat-card class="saldo-card saldo-inicial">
-      <mat-card-content>
-        <div class="saldo-header">
-          <mat-icon>account_balance</mat-icon>
-          <span>Saldo Inicial</span>
-        </div>
-        <div class="saldo-valores">
-          <div class="valor-real">{{ folhaAtual.saldoInicialReal | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="valor-provisionado" *ngIf="folhaAtual.saldoInicialProvisionado !== folhaAtual.saldoInicialReal">
-            Prov: {{ folhaAtual.saldoInicialProvisionado | currency:'BRL':'symbol':'1.2-2' }}
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="saldo-card receitas">
-      <mat-card-content>
-        <div class="saldo-header">
-          <mat-icon>trending_up</mat-icon>
-          <span>Receitas</span>
-        </div>
-        <div class="saldo-valores">
-          <div class="valor-real">{{ folhaAtual.totalReceitasReais | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="valor-provisionado" *ngIf="folhaAtual.totalReceitasProvisionadas !== folhaAtual.totalReceitasReais">
-            Prov: {{ folhaAtual.totalReceitasProvisionadas | currency:'BRL':'symbol':'1.2-2' }}
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="saldo-card despesas">
-      <mat-card-content>
-        <div class="saldo-header">
-          <mat-icon>trending_down</mat-icon>
-          <span>Despesas</span>
-        </div>
-        <div class="saldo-valores">
-          <div class="valor-real">{{ folhaAtual.totalDespesasReais | currency:'BRL':'symbol':'1.2-2' }}</div>
-          <div class="valor-provisionado" *ngIf="folhaAtual.totalDespesasProvisionadas !== folhaAtual.totalDespesasReais">
-            Prov: {{ folhaAtual.totalDespesasProvisionadas | currency:'BRL':'symbol':'1.2-2' }}
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="saldo-card saldo-final">
-      <mat-card-content>
-        <div class="saldo-header">
-          <mat-icon>account_balance_wallet</mat-icon>
-          <span>Saldo Final</span>
-        </div>
-        <div class="saldo-valores">
-          <div class="valor-real" [class.negativo]="folhaAtual.saldoFinalReal < 0">
-            {{ folhaAtual.saldoFinalReal | currency:'BRL':'symbol':'1.2-2' }}
-          </div>
-          <div class="valor-provisionado" *ngIf="folhaAtual.saldoFinalProvisionado !== folhaAtual.saldoFinalReal">
-            Prov: {{ folhaAtual.saldoFinalProvisionado | currency:'BRL':'symbol':'1.2-2' }}
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    </div>
   </div>
 
-  <!-- Lista de Lançamentos -->
-  <mat-card class="lancamentos-card" *ngIf="folhaAtual">
-    <mat-card-header>
-      <mat-card-title>Lançamentos do Mês</mat-card-title>
-      <div class="header-actions">
-        <mat-button-toggle-group [(value)]="filtroTipo" (change)="aplicarFiltros()">
-          <mat-button-toggle value="todos">Todos</mat-button-toggle>
-          <mat-button-toggle value="receitas">Receitas</mat-button-toggle>
-          <mat-button-toggle value="despesas">Despesas</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <div class="lancamentos-list">
-        <div *ngFor="let lancamento of lancamentosFiltrados" 
-             class="lancamento-item" 
-             [class.realizado]="lancamento.realizado"
-             [class.em-atraso]="lancamento.emAtraso">
-          
-          <div class="lancamento-info">
-            <div class="lancamento-header">
-              <h4>{{ lancamento.descricao }}</h4>
-              <div class="lancamento-badges">
-                <span class="tipo-badge" [class.receita]="lancamento.tipo === 1" [class.despesa]="lancamento.tipo === 2">
-                  {{ lancamento.tipo === 1 ? 'Receita' : 'Despesa' }}
-                </span>
-                <span class="status-badge" [class.realizado]="lancamento.realizado" [class.pendente]="!lancamento.realizado">
-                  {{ lancamento.statusDescricao }}
-                </span>
-              </div>
-            </div>
-            
-            <div class="lancamento-detalhes">
-              <div class="valores">
-                <div class="valor-principal" [class.receita]="lancamento.tipo === 1" [class.despesa]="lancamento.tipo === 2">
-                  {{ lancamento.valorEfetivo | currency:'BRL':'symbol':'1.2-2' }}
-                </div>
-                <div class="valor-secundario" *ngIf="lancamento.valorReal && lancamento.valorReal !== lancamento.valorProvisionado">
-                  Prov: {{ lancamento.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}
-                </div>
-              </div>
-              
-              <div class="datas">
-                <div class="data-prevista">
-                  <mat-icon>schedule</mat-icon>
-                  {{ lancamento.dataPrevista | date:'dd/MM/yyyy':'pt-BR' }}
-                </div>
-                <div class="data-realizacao" *ngIf="lancamento.dataRealizacao">
-                  <mat-icon>check_circle</mat-icon>
-                  {{ lancamento.dataRealizacao | date:'dd/MM/yyyy':'pt-BR' }}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="lancamento-actions">
-            <button mat-icon-button 
-                    *ngIf="!lancamento.realizado" 
-                    (click)="realizarLancamento(lancamento)"
-                    matTooltip="Realizar Lançamento">
-              <mat-icon>check</mat-icon>
-            </button>
-            <button mat-icon-button 
-                    (click)="editarLancamento(lancamento)"
-                    matTooltip="Editar">
-              <mat-icon>edit</mat-icon>
-            </button>
-          </div>
-        </div>
-        
-        <div *ngIf="lancamentosFiltrados.length === 0" class="empty-state">
-          <mat-icon>inbox</mat-icon>
-          <p>Nenhum lançamento encontrado para este mês</p>
-        </div>
-      </div>
-    </mat-card-content>
-  </mat-card>
-
   <!-- Loading State -->
-  <div *ngIf="isLoading" class="loading-container">
+  <div class="loading-container" *ngIf="isLoading">
     <mat-spinner></mat-spinner>
     <p>Carregando folha mensal...</p>
   </div>
-</div>
 
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon class="error-icon">error</mat-icon>
+    <h3>Erro ao carregar dados</h3>
+    <p>{{ error }}</p>
+    <button mat-raised-button color="primary" (click)="carregarFolhaMensal()">
+      Tentar Novamente
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="folha-content" *ngIf="!isLoading && !error && folhaAtual">
+    <!-- Resumo da Folha -->
+    <div class="resumo-section">
+      <mat-card class="resumo-card">
+        <mat-card-header>
+          <mat-card-title>Resumo - {{ formatMesAno(mesAnoSelecionado) }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="resumo-table">
+            <div class="resumo-header">
+              <div class="item-label"></div>
+              <div class="valor-header">Provisionado</div>
+              <div class="valor-header">Real</div>
+              <div class="valor-header">Diferença</div>
+            </div>
+            
+            <div class="resumo-row">
+              <div class="item-label">Saldo Inicial</div>
+              <div class="valor">{{ saldoInicial | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor">{{ saldoInicial | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor">R$ 0,00</div>
+            </div>
+            
+            <div class="resumo-row receitas">
+              <div class="item-label">Receitas</div>
+              <div class="valor positive">{{ totalReceitasProvisionadas | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor positive">{{ totalReceitas | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor" [ngClass]="{'positive': (totalReceitas - totalReceitasProvisionadas) >= 0, 'negative': (totalReceitas - totalReceitasProvisionadas) < 0}">
+                {{ (totalReceitas - totalReceitasProvisionadas) | currency:'BRL':'symbol':'1.2-2' }}
+              </div>
+            </div>
+            
+            <div class="resumo-row despesas">
+              <div class="item-label">Despesas</div>
+              <div class="valor negative">{{ totalDespesasProvisionadas | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor negative">{{ totalDespesas | currency:'BRL':'symbol':'1.2-2' }}</div>
+              <div class="valor" [ngClass]="{'positive': (totalDespesasProvisionadas - totalDespesas) >= 0, 'negative': (totalDespesasProvisionadas - totalDespesas) < 0}">
+                {{ (totalDespesasProvisionadas - totalDespesas) | currency:'BRL':'symbol':'1.2-2' }}
+              </div>
+            </div>
+            
+            <div class="resumo-row total">
+              <div class="item-label"><strong>Saldo Final</strong></div>
+              <div class="valor" [ngClass]="{'positive': (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas) >= 0, 'negative': (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas) < 0}">
+                <strong>{{ (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas) | currency:'BRL':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div class="valor" [ngClass]="{'positive': saldoFinal >= 0, 'negative': saldoFinal < 0}">
+                <strong>{{ saldoFinal | currency:'BRL':'symbol':'1.2-2' }}</strong>
+              </div>
+              <div class="valor" [ngClass]="{'positive': (saldoFinal - (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas)) >= 0, 'negative': (saldoFinal - (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas)) < 0}">
+                <strong>{{ (saldoFinal - (saldoInicial + totalReceitasProvisionadas - totalDespesasProvisionadas)) | currency:'BRL':'symbol':'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-section">
+      <mat-button-toggle-group [(value)]="filtroTipo">
+        <mat-button-toggle value="todos">Todos</mat-button-toggle>
+        <mat-button-toggle value="receitas">Receitas</mat-button-toggle>
+        <mat-button-toggle value="despesas">Despesas</mat-button-toggle>
+      </mat-button-toggle-group>
+      
+      <button mat-raised-button color="primary">
+        <mat-icon>add</mat-icon>
+        Novo Lançamento
+      </button>
+    </div>
+
+    <!-- Planilha de Lançamentos -->
+    <div class="lancamentos-section">
+      <mat-card class="lancamentos-card">
+        <mat-card-header>
+          <mat-card-title>Lançamentos por Categoria</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="spreadsheet-container">
+            <!-- Cabeçalho da Planilha -->
+            <div class="spreadsheet-header">
+              <div class="col-descricao">Descrição</div>
+              <div class="col-tipo">Tipo</div>
+              <div class="col-data">Data</div>
+              <div class="col-valor">Provisionado</div>
+              <div class="col-valor">Real</div>
+              <div class="col-status">Status</div>
+              <div class="col-acoes">Ações</div>
+            </div>
+
+            <!-- Grupos por Categoria -->
+            <div class="categoria-group" *ngFor="let categoria of categoriasAgrupadas">
+              <!-- Cabeçalho da Categoria -->
+              <div class="categoria-header">
+                <div class="categoria-info">
+                  <h4>{{ categoria.nome }}</h4>
+                  <span class="categoria-resumo">
+                    {{ categoria.lancamentos.length }} lançamento(s)
+                  </span>
+                </div>
+                <div class="categoria-valores">
+                  <span class="valor-provisionado">{{ categoria.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  <span class="valor-real">{{ categoria.valorReal | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  <span class="diferenca" [ngClass]="{'positive': categoria.diferenca >= 0, 'negative': categoria.diferenca < 0}">
+                    {{ categoria.diferenca | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Lançamentos da Categoria -->
+              <div class="lancamento-row" *ngFor="let lancamento of categoria.lancamentos"
+                   [ngClass]="{'realizado': lancamento.realizado, 'pendente': !lancamento.realizado}">
+                
+                <div class="col-descricao">
+                  <span class="descricao">{{ lancamento.descricao }}</span>
+                  <span class="recorrencia" *ngIf="lancamento.tipoRecorrencia !== 1">
+                    {{ getTipoRecorrenciaText(lancamento.tipoRecorrencia) }}
+                  </span>
+                </div>
+                
+                <div class="col-tipo">
+                  <mat-icon class="tipo-icon" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    {{ lancamento.tipo === 1 ? 'trending_up' : 'trending_down' }}
+                  </mat-icon>
+                  <span>{{ getTipoLancamentoText(lancamento.tipo) }}</span>
+                </div>
+                
+                <div class="col-data">
+                  {{ lancamento.dataInicial | date:'dd/MM/yyyy' }}
+                </div>
+                
+                <div class="col-valor">
+                  <span class="valor" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    {{ (lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+                
+                <div class="col-valor">
+                  <span class="valor" *ngIf="lancamento.realizado" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    {{ lancamento.valor | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+                  <span class="valor-pendente" *ngIf="!lancamento.realizado">-</span>
+                </div>
+                
+                <div class="col-status">
+                  <div class="status-badge" [ngClass]="{'realizado': lancamento.realizado, 'pendente': !lancamento.realizado, 'cancelado': lancamento.cancelado}">
+                    <mat-icon class="status-icon">
+                      {{ lancamento.realizado ? 'check_circle' : (lancamento.cancelado ? 'cancel' : 'schedule') }}
+                    </mat-icon>
+                    <span>{{ lancamento.realizado ? 'Realizado' : (lancamento.cancelado ? 'Cancelado' : 'Pendente') }}</span>
+                  </div>
+                </div>
+                
+                <div class="col-acoes">
+                  <button mat-icon-button *ngIf="!lancamento.realizado && !lancamento.cancelado" 
+                          (click)="realizarLancamento(lancamento)"
+                          matTooltip="Realizar Lançamento">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="editarLancamento(lancamento)"
+                          matTooltip="Editar Lançamento">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado Vazio -->
+            <div class="empty-state" *ngIf="categoriasAgrupadas.length === 0">
+              <mat-icon class="empty-icon">receipt_long</mat-icon>
+              <h3>Nenhum lançamento encontrado</h3>
+              <p>Não há lançamentos para este mês. Crie seu primeiro lançamento para começar.</p>
+              <button mat-raised-button color="primary">
+                <mat-icon>add</mat-icon>
+                Criar Lançamento
+              </button>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

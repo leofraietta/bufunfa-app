@@ -9,7 +9,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, NativeDateAdapter, DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../services/api';
+import { ApiService } from '../services/api.service';
 
 // Definir formato de data brasileiro
 const MY_DATE_FORMATS = {
@@ -307,7 +307,7 @@ export class LancamentoDialogComponent implements OnInit {
 
       const operation = this.isEdit 
         ? this.apiService.updateLancamento(this.data.lancamento.id, lancamentoData)
-        : this.apiService.addLancamento(lancamentoData);
+        : this.apiService.createLancamento(lancamentoData);
 
       operation.subscribe({
         next: (result: any) => {

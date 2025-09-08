@@ -1,4 +1,64 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #fafafa;
+}
+
+/* Global Material Design overrides */
+.mat-mdc-snack-bar-container.warning-snackbar {
+  --mdc-snackbar-container-color: #ff9800;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+}
+
+.mat-mdc-snack-bar-container.error-snackbar {
+  --mdc-snackbar-container-color: #f44336;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+}
+
+.mat-mdc-snack-bar-container.success-snackbar {
+  --mdc-snackbar-container-color: #4caf50;
+  --mdc-snackbar-supporting-text-color: #ffffff;
+}
+
+/* Fix Material toolbar colors */
+.mat-toolbar.mat-primary {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.mat-toolbar.mat-primary .mat-button,
+.mat-toolbar.mat-primary .mat-icon-button {
+  color: white !important;
+}
+
+/* Ensure proper spacing for main content */
+.main-content {
+  min-height: calc(100vh - 64px);
+  padding: 0;
+}
+
+/* Dashboard specific fixes */
+.dashboard-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Navigation fixes */
+.mat-toolbar .mat-button,
+.mat-toolbar .mat-icon-button {
+  color: white !important;
+}
+
+.mat-toolbar .mat-button:hover,
+.mat-toolbar .mat-icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}

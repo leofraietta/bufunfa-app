@@ -2,21 +2,27 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.main-nav {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.spacer {
-  flex: 1 1 auto;
+  background-color: #fafafa;
 }
 
 .main-content {
   flex: 1;
   overflow-y: auto;
+}
+
+.main-content.with-navigation {
+  padding-top: 0;
+}
+
+/* Content spacing when navigation is present */
+.main-content.with-navigation {
+  padding: 0;
+}
+
+.main-content.with-navigation > * {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
 }
 
 /* Estilos globais para a aplicação */

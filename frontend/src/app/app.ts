@@ -1,21 +1,16 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { RouterOutlet, RouterLink, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from './auth/auth.service';
+import { NavigationComponent } from './shared/navigation/navigation';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
     RouterOutlet,
-    RouterLink,
     CommonModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule
+    NavigationComponent
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.css']

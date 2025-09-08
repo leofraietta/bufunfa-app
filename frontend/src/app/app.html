@@ -1,23 +1,9 @@
 <div class="app-container">
   <!-- Navegação principal (só aparece quando logado) -->
-  <nav *ngIf="isAuthenticated" class="main-nav">
-    <mat-toolbar color="primary">
-      <span>{{ title }}</span>
-      <span class="spacer"></span>
-      <button mat-button routerLink="/dashboard">Dashboard</button>
-      <button mat-button routerLink="/folha-mensal">Folha Mensal</button>
-      <button mat-button routerLink="/contas">Contas</button>
-      <button mat-button routerLink="/lancamentos">Lançamentos</button>
-      <button mat-button routerLink="/provisionamento">Provisionamento</button>
-      <button mat-button routerLink="/contas-conjuntas">Contas Conjuntas</button>
-      <button mat-icon-button (click)="logout()">
-        <mat-icon>logout</mat-icon>
-      </button>
-    </mat-toolbar>
-  </nav>
+  <app-navigation *ngIf="isAuthenticated"></app-navigation>
 
   <!-- Conteúdo principal -->
-  <main class="main-content">
+  <main class="main-content" [class.with-navigation]="isAuthenticated">
     <router-outlet></router-outlet>
   </main>
 </div>

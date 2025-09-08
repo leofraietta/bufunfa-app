@@ -4,29 +4,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTableModule } from '@angular/material/table';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../services/api';
+import { ApiService, Conta } from '../services/api.service';
 import { ContaDialogComponent } from './conta-dialog';
-
-interface Conta {
-  id: number;
-  nome: string;
-  descricao: string;
-  tipo: number;
-  saldoInicial: number;
-  saldoAtual: number;
-  ativa: boolean;
-  dataCriacao: Date;
-  dataAtualizacao?: Date;
-  // Propriedades específicas para CartaoCredito
-  diaFechamento?: number;
-  diaVencimento?: number;
-  limiteCredito?: number;
-  // Propriedades específicas para ContaCorrente
-  numeroConta?: string;
-  numeroAgencia?: string;
-  nomeBanco?: string;
-}
 
 @Component({
   selector: 'app-contas',
@@ -37,18 +22,26 @@ interface Conta {
     MatButtonModule,
     MatListModule,
     MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatChipsModule,
+    MatTooltipModule
   ],
   templateUrl: './contas.html',
-  styleUrls: ['./contas.css']
+  styleUrls: ['./contas.scss']
 })
 export class ContasComponent implements OnInit {
   contas: Conta[] = [];
   isLoading = false;
+  error: string | null = null;
+  displayedColumns: string[] = ['nome', 'tipo', 'saldoInicial', 'status', 'acoes'];
 
   constructor(
     private dialog: MatDialog,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
@@ -57,6 +50,7 @@ export class ContasComponent implements OnInit {
 
   loadContas() {
     this.isLoading = true;
+    this.error = null;
     this.apiService.getContas().subscribe({
       next: (contas) => {
         this.contas = contas;
@@ -64,31 +58,25 @@ export class ContasComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erro ao carregar contas:', error);
+        this.error = 'Erro ao carregar contas. Usando dados de exemplo.';
         this.isLoading = false;
         // Fallback para dados mockados em caso de erro
         this.contas = [
           { 
             id: 1, 
             nome: 'Conta Corrente', 
-            descricao: 'Conta corrente principal',
-            tipo: 1, 
+            tipo: 1, // TipoConta.ContaCorrente
             saldoInicial: 1000.00,
-            saldoAtual: 1000.00,
-            ativa: true,
-            dataCriacao: new Date()
+            ativa: true
           },
           { 
             id: 2, 
             nome: 'Cartão Visa', 
-            descricao: 'Cartão de crédito Visa',
-            tipo: 3, 
+            tipo: 2, // TipoConta.ContaCartaoCredito
             saldoInicial: 0.00,
-            saldoAtual: 0.00,
             ativa: true,
-            dataCriacao: new Date(),
-            diaFechamento: 5,
-            diaVencimento: 15,
-            limiteCredito: 5000.00
+            dataFechamento: 5,
+            dataVencimento: 15
           }
         ];
       }
@@ -127,16 +115,45 @@ export class ContasComponent implements OnInit {
     if (confirm('Tem certeza que deseja excluir esta conta?')) {
       this.apiService.deleteConta(id).subscribe({
         next: () => {
-          console.log('Conta deletada:', id);
+          this.snackBar.open('Conta excluída com sucesso', 'Fechar', { duration: 3000 });
           this.loadContas(); // Recarregar lista
         },
         error: (error) => {
           console.error('Erro ao deletar conta:', error);
+          this.snackBar.open('Erro ao excluir conta', 'Fechar', { duration: 3000 });
           // Fallback para remoção local em caso de erro
           this.contas = this.contas.filter(c => c.id !== id);
         }
       });
     }
+  }
+
+  getTipoContaText(tipo: number): string {
+    return this.apiService.getTipoContaText(tipo);
+  }
+
+  getTipoContaIcon(tipo: number): string {
+    switch (tipo) {
+      case 1: return 'account_balance'; // ContaCorrente
+      case 2: return 'credit_card'; // ContaCartaoCredito
+      default: return 'account_balance_wallet';
+    }
+  }
+
+  getStatusColor(ativa: boolean): string {
+    return ativa ? 'primary' : 'warn';
+  }
+
+  getStatusText(ativa: boolean): string {
+    return ativa ? 'Ativa' : 'Inativa';
+  }
+
+  getContasAtivas(): number {
+    return this.contas.filter(conta => conta.ativa).length;
+  }
+
+  getTotalSaldoInicial(): number {
+    return this.contas.reduce((total, conta) => total + conta.saldoInicial, 0);
   }
 }
 

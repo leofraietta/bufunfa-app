@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login';
 import { DashboardComponent } from './dashboard/dashboard';
 import { ContasComponent } from './contas/contas';
+import { CategoriasComponent } from './categorias/categorias';
 import { LancamentosComponent } from './lancamentos/lancamentos';
 import { ContasConjuntasComponent } from './contas-conjuntas/contas-conjuntas';
 import { FolhaMensalComponent } from './folha-mensal/folha-mensal';
@@ -13,6 +14,7 @@ export const routes: Routes = [
   { path: 'auth/callback', component: AuthCallbackComponent },
   { path: 'dashboard', component: DashboardComponent },
   { path: 'contas', component: ContasComponent },
+  { path: 'categorias', component: CategoriasComponent },
   { path: 'lancamentos', component: LancamentosComponent },
   { path: 'folha-mensal', component: FolhaMensalComponent },
   { path: 'provisionamento', component: ProvisionamentoComponent },

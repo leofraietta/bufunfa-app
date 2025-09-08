@@ -48,11 +48,27 @@ namespace Bufunfa.Api.Converters
 
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            // Converter para horário local brasileiro para exibição
-            var brazilTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
-            var localTime = TimeZoneInfo.ConvertTimeFromUtc(value, brazilTimeZone);
+            DateTime dateToWrite;
             
-            writer.WriteStringValue(localTime.ToString(DateFormat, new CultureInfo("pt-BR")));
+            // Se o DateTime já tem Kind definido, usar conforme apropriado
+            if (value.Kind == DateTimeKind.Utc)
+            {
+                // Converter UTC para horário local brasileiro
+                var brazilTimeZone = TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+                dateToWrite = TimeZoneInfo.ConvertTimeFromUtc(value, brazilTimeZone);
+            }
+            else if (value.Kind == DateTimeKind.Local)
+            {
+                // Já é local, usar diretamente
+                dateToWrite = value;
+            }
+            else
+            {
+                // DateTimeKind.Unspecified - assumir como local
+                dateToWrite = DateTime.SpecifyKind(value, DateTimeKind.Local);
+            }
+            
+            writer.WriteStringValue(dateToWrite.ToString(DateFormat, new CultureInfo("pt-BR")));
         }
     }
 

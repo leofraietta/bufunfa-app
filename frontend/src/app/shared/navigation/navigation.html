@@ -1,0 +1,121 @@
+<nav class="navigation-container">
+  <mat-toolbar class="main-toolbar" color="primary">
+    <!-- Logo/Brand -->
+    <div class="brand-section">
+      <mat-icon class="brand-icon">account_balance_wallet</mat-icon>
+      <span class="brand-text">Bufunfa</span>
+    </div>
+
+    <!-- Navigation Items -->
+    <div class="nav-items">
+      <ng-container *ngFor="let item of navigationItems">
+        <!-- Simple navigation item -->
+        <button 
+          *ngIf="!item.children"
+          mat-button 
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [matTooltip]="item.description"
+          matTooltipPosition="below"
+          class="nav-button">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.label }}</span>
+          <mat-icon 
+            *ngIf="item.badge && item.badge > 0" 
+            matBadge="{{ item.badge }}" 
+            matBadgeColor="accent"
+            matBadgeSize="small">
+          </mat-icon>
+        </button>
+
+        <!-- Navigation item with submenu -->
+        <button 
+          *ngIf="item.children"
+          mat-button 
+          [matMenuTriggerFor]="submenu"
+          [class.active]="isRouteActive(item.route)"
+          [matTooltip]="item.description"
+          matTooltipPosition="below"
+          class="nav-button">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span class="nav-label">{{ item.label }}</span>
+          <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+        </button>
+
+        <!-- Submenu -->
+        <mat-menu #submenu="matMenu" class="nav-submenu">
+          <ng-container *ngFor="let child of item.children">
+            <button 
+              mat-menu-item 
+              [routerLink]="child.route"
+              routerLinkActive="active">
+              <mat-icon>{{ child.icon }}</mat-icon>
+              <span>{{ child.label }}</span>
+            </button>
+          </ng-container>
+        </mat-menu>
+      </ng-container>
+    </div>
+
+    <!-- User Section -->
+    <div class="user-section">
+      <!-- User Menu -->
+      <button 
+        mat-button 
+        [matMenuTriggerFor]="userMenu"
+        class="user-button">
+        <div class="user-avatar">
+          <span class="user-initials">{{ getUserInitials() }}</span>
+        </div>
+        <div class="user-info" *ngIf="user">
+          <span class="user-name">{{ user.name }}</span>
+          <span class="user-email">{{ user.email }}</span>
+        </div>
+        <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+      </button>
+
+      <!-- User Menu -->
+      <mat-menu #userMenu="matMenu" class="user-menu">
+        <div class="user-menu-header">
+          <div class="user-avatar large">
+            <span class="user-initials">{{ getUserInitials() }}</span>
+          </div>
+          <div class="user-details" *ngIf="user">
+            <div class="user-name">{{ user.name }}</div>
+            <div class="user-email">{{ user.email }}</div>
+          </div>
+        </div>
+        
+        <mat-divider></mat-divider>
+        
+        <button mat-menu-item routerLink="/perfil">
+          <mat-icon>person</mat-icon>
+          <span>Meu Perfil</span>
+        </button>
+        
+        <button mat-menu-item routerLink="/configuracoes">
+          <mat-icon>settings</mat-icon>
+          <span>Configurações</span>
+        </button>
+        
+        <mat-divider></mat-divider>
+        
+        <button mat-menu-item (click)="logout()" class="logout-item">
+          <mat-icon>logout</mat-icon>
+          <span>Sair</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+
+  <!-- Breadcrumb/Current Page Indicator -->
+  <div class="page-indicator" *ngIf="getActiveItem() as activeItem">
+    <div class="page-info">
+      <mat-icon class="page-icon">{{ activeItem.icon }}</mat-icon>
+      <div class="page-details">
+        <h1 class="page-title">{{ activeItem.label }}</h1>
+        <p class="page-description">{{ activeItem.description }}</p>
+      </div>
+    </div>
+  </div>
+</nav>

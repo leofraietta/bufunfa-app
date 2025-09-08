@@ -1,30 +1,209 @@
 <div class="lancamentos-container">
-  <mat-card>
-    <mat-card-header>
-      <mat-card-title>Meus Lançamentos</mat-card-title>
-      <button mat-raised-button color="primary" (click)="openDialog()">Adicionar Lançamento</button>
-    </mat-card-header>
-    <mat-card-content>
-      <mat-list>
-        <mat-list-item *ngFor="let lancamento of lancamentos">
-          <h3 matListItemTitle>{{ lancamento.descricao }}</h3>
-          <p matListItemLine>
-            Valor: {{ (lancamento.valorReal || lancamento.valorProvisionado || lancamento.valor) | number:".2-2" }}
-            <span *ngIf="lancamento.valorProvisionado && lancamento.valorReal && lancamento.valorProvisionado !== lancamento.valorReal">
-              (Provisionado: {{ lancamento.valorProvisionado | number:".2-2" }})
-            </span>
-          </p>
-          <p matListItemLine>Data: {{ lancamento.data | date:"shortDate" }}</p>
-          <p matListItemLine>
-            Tipo: {{ lancamento.tipo === 1 ? 'Receita' : 'Despesa' }} - 
-            {{ getTipoRecorrenciaText(lancamento.tipoRecorrencia) }}
-          </p>
-          <button mat-icon-button (click)="editLancamento(lancamento)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="warn" (click)="deleteLancamento(lancamento.id)"><mat-icon>delete</mat-icon></button>
-        </mat-list-item>
-      </mat-list>
-    </mat-card-content>
-  </mat-card>
+  <div class="header">
+    <h1>Gerenciar Lançamentos</h1>
+    <button mat-raised-button color="primary" (click)="openDialog()">
+      <mat-icon>add</mat-icon>
+      Novo Lançamento
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>Carregando lançamentos...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon class="error-icon">warning</mat-icon>
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content" *ngIf="!isLoading">
+    <mat-card class="lancamentos-card">
+      <mat-card-content>
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="lancamentos.length === 0 && !error">
+          <mat-icon class="empty-icon">receipt_long</mat-icon>
+          <h3>Nenhum lançamento cadastrado</h3>
+          <p>Registre suas receitas e despesas para controlar suas finanças.</p>
+          <button mat-raised-button color="primary" (click)="openDialog()">
+            <mat-icon>add</mat-icon>
+            Criar Primeiro Lançamento
+          </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filtros-container" *ngIf="lancamentos.length > 0">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo</mat-label>
+            <mat-select [(value)]="filtroTipo" (selectionChange)="onFiltroChange()">
+              <mat-option value="todos">Todos</mat-option>
+              <mat-option value="receitas">Receitas</mat-option>
+              <mat-option value="despesas">Despesas</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Status</mat-label>
+            <mat-select [(value)]="filtroStatus" (selectionChange)="onFiltroChange()">
+              <mat-option value="todos">Todos</mat-option>
+              <mat-option value="realizados">Realizados</mat-option>
+              <mat-option value="pendentes">Pendentes</mat-option>
+              <mat-option value="cancelados">Cancelados</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Lançamentos Table -->
+        <div class="table-container" *ngIf="lancamentosFiltrados.length > 0">
+          <table mat-table [dataSource]="lancamentosFiltrados" class="lancamentos-table">
+            <!-- Descrição Column -->
+            <ng-container matColumnDef="descricao">
+              <th mat-header-cell *matHeaderCellDef>Lançamento</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <div class="lancamento-info">
+                  <div class="lancamento-header">
+                    <mat-icon class="lancamento-icon" [color]="getTipoLancamentoColor(lancamento.tipo)">
+                      {{ getTipoLancamentoIcon(lancamento.tipo) }}
+                    </mat-icon>
+                    <div class="lancamento-details">
+                      <span class="lancamento-descricao">{{ lancamento.descricao }}</span>
+                      <span class="lancamento-id">#{{ lancamento.id }}</span>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Valor Column -->
+            <ng-container matColumnDef="valor">
+              <th mat-header-cell *matHeaderCellDef>Valor</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <div class="valor-container">
+                  <span class="valor-principal" [ngClass]="{'positive': lancamento.tipo === 1, 'negative': lancamento.tipo === 2}">
+                    {{ (lancamento.valorReal || lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+                  <span class="valor-provisionado" *ngIf="lancamento.valorProvisionado && lancamento.valorReal && lancamento.valorProvisionado !== lancamento.valorReal">
+                    Prev: {{ lancamento.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Data Column -->
+            <ng-container matColumnDef="data">
+              <th mat-header-cell *matHeaderCellDef>Data</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <span class="data-lancamento">
+                  {{ (lancamento.data || lancamento.dataInicial) | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Tipo Column -->
+            <ng-container matColumnDef="tipo">
+              <th mat-header-cell *matHeaderCellDef>Tipo</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <mat-chip [color]="getTipoLancamentoColor(lancamento.tipo)" selected>
+                  {{ getTipoLancamentoText(lancamento.tipo) }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <mat-chip [color]="getStatusColor(lancamento)" selected>
+                  <mat-icon matChipAvatar>
+                    {{ lancamento.realizado ? 'check_circle' : (lancamento.cancelado ? 'cancel' : 'schedule') }}
+                  </mat-icon>
+                  {{ getStatusText(lancamento) }}
+                </mat-chip>
+              </td>
+            </ng-container>
+
+            <!-- Ações Column -->
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef>Ações</th>
+              <td mat-cell *matCellDef="let lancamento">
+                <div class="acoes-container">
+                  <button mat-icon-button 
+                          *ngIf="!lancamento.realizado && !lancamento.cancelado"
+                          color="accent"
+                          (click)="realizarLancamento(lancamento)"
+                          matTooltip="Realizar lançamento">
+                    <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-icon-button 
+                          (click)="editLancamento(lancamento)"
+                          matTooltip="Editar lançamento">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button 
+                          color="warn"
+                          (click)="deleteLancamento(lancamento.id)"
+                          matTooltip="Excluir lançamento">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="lancamento-row"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Summary Card -->
+    <mat-card class="summary-card" *ngIf="lancamentos.length > 0">
+      <mat-card-header>
+        <mat-card-title>Resumo dos Lançamentos</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <mat-icon>receipt_long</mat-icon>
+            <div class="summary-details">
+              <span class="summary-label">Total de Lançamentos</span>
+              <span class="summary-value">{{ lancamentos.length }}</span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <mat-icon>trending_up</mat-icon>
+            <div class="summary-details">
+              <span class="summary-label">Total Receitas</span>
+              <span class="summary-value positive">
+                {{ getTotalReceitas() | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <mat-icon>trending_down</mat-icon>
+            <div class="summary-details">
+              <span class="summary-label">Total Despesas</span>
+              <span class="summary-value negative">
+                {{ getTotalDespesas() | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          </div>
+          <div class="summary-item">
+            <mat-icon>account_balance_wallet</mat-icon>
+            <div class="summary-details">
+              <span class="summary-label">Saldo Líquido</span>
+              <span class="summary-value" [ngClass]="{'positive': getTotalReceitas() - getTotalDespesas() >= 0, 'negative': getTotalReceitas() - getTotalDespesas() < 0}">
+                {{ (getTotalReceitas() - getTotalDespesas()) | currency:'BRL':'symbol':'1.2-2' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
 </div>
 
 
