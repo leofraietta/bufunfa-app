@@ -1,0 +1,217 @@
+<div class="relatorios-evolucao-container">
+  <div class="header">
+    <h1>
+      <mat-icon>trending_up</mat-icon>
+      Evolução Temporal
+    </h1>
+    <p class="subtitle">Análise da evolução financeira ao longo do tempo</p>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filtros-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtros-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Data Início</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtros.dataInicio">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data Fim</mat-label>
+          <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtros.dataFim">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFim></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Conta</mat-label>
+          <mat-select [(ngModel)]="filtros.contaId">
+            <mat-option [value]="null">Todas as contas</mat-option>
+            <mat-option *ngFor="let conta of contas" [value]="conta.id">
+              {{conta.nome}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-button-toggle-group [(ngModel)]="filtros.periodo" appearance="legacy">
+          <mat-button-toggle value="mensal">Mensal</mat-button-toggle>
+          <mat-button-toggle value="trimestral">Trimestral</mat-button-toggle>
+          <mat-button-toggle value="anual">Anual</mat-button-toggle>
+        </mat-button-toggle-group>
+
+        <button mat-raised-button color="primary" (click)="gerarRelatorio()" [disabled]="loading">
+          <mat-icon>refresh</mat-icon>
+          Atualizar
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Gerando relatório...</p>
+  </div>
+
+  <!-- Resumo Estatístico -->
+  <div *ngIf="!loading && dadosEvolucao.length > 0" class="resumo-grid">
+    <mat-card class="resumo-card receitas">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>trending_up</mat-icon>
+          <div class="resumo-info">
+            <h3>Total Receitas</h3>
+            <p class="valor">{{ getTotalReceitas() | currency:'BRL':'symbol':'1.2-2' }}</p>
+            <span class="media">Média: {{ getMediaReceitas() | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="resumo-card despesas">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>trending_down</mat-icon>
+          <div class="resumo-info">
+            <h3>Total Despesas</h3>
+            <p class="valor">{{ getTotalDespesas() | currency:'BRL':'symbol':'1.2-2' }}</p>
+            <span class="media">Média: {{ getMediaDespesas() | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="resumo-card saldo" [ngClass]="{'positivo': getSaldoTotal() >= 0, 'negativo': getSaldoTotal() < 0}">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>{{ getSaldoTotal() >= 0 ? 'account_balance_wallet' : 'money_off' }}</mat-icon>
+          <div class="resumo-info">
+            <h3>Saldo Período</h3>
+            <p class="valor">{{ getSaldoTotal() | currency:'BRL':'symbol':'1.2-2' }}</p>
+            <span class="media">Final: {{ getSaldoFinal() | currency:'BRL':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Gráfico de Evolução -->
+  <mat-card *ngIf="!loading && dadosEvolucao.length > 0" class="grafico-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>show_chart</mat-icon>
+        Evolução Mensal
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button (click)="exportarRelatorio()" matTooltip="Exportar relatório">
+          <mat-icon>download</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="grafico-container">
+        <div class="grafico-legenda">
+          <div class="legenda-item receitas">
+            <div class="cor-indicador"></div>
+            <span>Receitas</span>
+          </div>
+          <div class="legenda-item despesas">
+            <div class="cor-indicador"></div>
+            <span>Despesas</span>
+          </div>
+          <div class="legenda-item saldo">
+            <div class="cor-indicador"></div>
+            <span>Saldo Acumulado</span>
+          </div>
+        </div>
+        
+        <div class="grafico-barras">
+          <div class="periodo-item" *ngFor="let item of dadosEvolucao">
+            <div class="periodo-label">{{ item.periodo }}</div>
+            <div class="barras-container">
+              <div class="barra receitas" 
+                   [style.height.px]="(item.receitas / getMediaReceitas()) * 60"
+                   [matTooltip]="'Receitas: ' + (item.receitas | currency:'BRL':'symbol':'1.2-2')">
+              </div>
+              <div class="barra despesas" 
+                   [style.height.px]="(item.despesas / getMediaDespesas()) * 60"
+                   [matTooltip]="'Despesas: ' + (item.despesas | currency:'BRL':'symbol':'1.2-2')">
+              </div>
+            </div>
+            <div class="saldo-indicador" 
+                 [ngClass]="{'positivo': item.saldo >= 0, 'negativo': item.saldo < 0}"
+                 [matTooltip]="'Saldo: ' + (item.saldo | currency:'BRL':'symbol':'1.2-2')">
+              <mat-icon>{{ item.saldo >= 0 ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabela Detalhada -->
+  <mat-card *ngIf="!loading && dadosEvolucao.length > 0" class="tabela-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>table_chart</mat-icon>
+        Dados Detalhados
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="tabela-container">
+        <table class="dados-tabela">
+          <thead>
+            <tr>
+              <th>Período</th>
+              <th>Receitas</th>
+              <th>Despesas</th>
+              <th>Saldo</th>
+              <th>Saldo Acumulado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of dadosEvolucao" 
+                [ngClass]="{'saldo-positivo': item.saldo >= 0, 'saldo-negativo': item.saldo < 0}">
+              <td class="periodo">{{ item.periodo }}</td>
+              <td class="receitas">{{ item.receitas | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td class="despesas">{{ item.despesas | currency:'BRL':'symbol':'1.2-2' }}</td>
+              <td class="saldo">
+                <span [ngClass]="{'positivo': item.saldo >= 0, 'negativo': item.saldo < 0}">
+                  {{ item.saldo | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+              </td>
+              <td class="saldo-acumulado">
+                <span [ngClass]="{'positivo': item.saldoAcumulado >= 0, 'negativo': item.saldoAcumulado < 0}">
+                  {{ item.saldoAcumulado | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Estado vazio -->
+  <mat-card *ngIf="!loading && dadosEvolucao.length === 0" class="empty-state">
+    <mat-card-content>
+      <div class="empty-content">
+        <mat-icon>trending_flat</mat-icon>
+        <h3>Nenhum dado encontrado</h3>
+        <p>Não há dados para o período selecionado. Verifique os filtros e tente novamente.</p>
+        <button mat-raised-button color="primary" (click)="gerarRelatorio()">
+          <mat-icon>refresh</mat-icon>
+          Tentar Novamente
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

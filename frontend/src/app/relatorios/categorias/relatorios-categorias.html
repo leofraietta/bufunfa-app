@@ -1,0 +1,154 @@
+<div class="relatorios-categorias-container">
+  <div class="header">
+    <h1>
+      <mat-icon>pie_chart</mat-icon>
+      Relatório por Categoria
+    </h1>
+    <p class="subtitle">Análise detalhada dos gastos por categoria</p>
+  </div>
+
+  <!-- Filtros -->
+  <mat-card class="filtros-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        Filtros
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="filtros-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Data Início</mat-label>
+          <input matInput [matDatepicker]="pickerInicio" [(ngModel)]="filtros.dataInicio">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+          <mat-datepicker #pickerInicio></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Data Fim</mat-label>
+          <input matInput [matDatepicker]="pickerFim" [(ngModel)]="filtros.dataFim">
+          <mat-datepicker-toggle matIconSuffix [for]="pickerFim"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFim></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Conta</mat-label>
+          <mat-select [(ngModel)]="filtros.contaId">
+            <mat-option [value]="null">Todas as contas</mat-option>
+            <mat-option *ngFor="let conta of contas" [value]="conta.id">
+              {{conta.nome}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" (click)="gerarRelatorio()" [disabled]="loading">
+          <mat-icon>refresh</mat-icon>
+          Atualizar
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Gerando relatório...</p>
+  </div>
+
+  <!-- Resumo -->
+  <div *ngIf="!loading && relatorioData.length > 0" class="resumo-grid">
+    <mat-card class="resumo-card previsto">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>trending_flat</mat-icon>
+          <div class="resumo-info">
+            <h3>Total Previsto</h3>
+            <p class="valor">{{ getTotalPrevisto() | currency:'BRL':'symbol':'1.2-2' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="resumo-card realizado">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>trending_up</mat-icon>
+          <div class="resumo-info">
+            <h3>Total Realizado</h3>
+            <p class="valor">{{ getTotalRealizado() | currency:'BRL':'symbol':'1.2-2' }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="resumo-card variacao" [ngClass]="{'positiva': getVariacao() >= 0, 'negativa': getVariacao() < 0}">
+      <mat-card-content>
+        <div class="resumo-content">
+          <mat-icon>{{ getVariacao() >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <div class="resumo-info">
+            <h3>Variação</h3>
+            <p class="valor">{{ getVariacao() | number:'1.1-1' }}%</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Relatório Detalhado -->
+  <mat-card *ngIf="!loading && relatorioData.length > 0" class="relatorio-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>analytics</mat-icon>
+        Detalhamento por Categoria
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button (click)="exportarRelatorio()" matTooltip="Exportar relatório">
+          <mat-icon>download</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="categoria-item" *ngFor="let item of relatorioData">
+        <div class="categoria-header">
+          <div class="categoria-info">
+            <h4>{{ item.categoria }}</h4>
+            <span class="transacoes-count">{{ item.transacoes }} transações</span>
+          </div>
+          <div class="categoria-valores">
+            <div class="valor-previsto">
+              <span class="label">Previsto:</span>
+              <span class="valor">{{ item.valorPrevisto | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="valor-realizado">
+              <span class="label">Realizado:</span>
+              <span class="valor">{{ item.valorRealizado | currency:'BRL':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="percentual">
+              <span class="valor">{{ item.percentual | number:'1.1-1' }}%</span>
+            </div>
+          </div>
+        </div>
+        <div class="categoria-barra">
+          <div class="barra-fundo">
+            <div class="barra-preenchimento" [style.width.%]="item.percentual"></div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Estado vazio -->
+  <mat-card *ngIf="!loading && relatorioData.length === 0" class="empty-state">
+    <mat-card-content>
+      <div class="empty-content">
+        <mat-icon>pie_chart_outline</mat-icon>
+        <h3>Nenhum dado encontrado</h3>
+        <p>Não há dados para o período selecionado. Verifique os filtros e tente novamente.</p>
+        <button mat-raised-button color="primary" (click)="gerarRelatorio()">
+          <mat-icon>refresh</mat-icon>
+          Tentar Novamente
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
