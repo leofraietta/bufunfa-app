@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../auth/auth.service';
 
 export interface Conta {
   id: number;
@@ -113,14 +114,10 @@ export class ApiService {
   private baseUrl = environment.apiUrl;
   private isApiAvailable = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   private getHeaders(): HttpHeaders {
-    // Temporário: removido Authorization para teste sem autenticação
-    // TODO: Implementar autenticação adequada
-    return new HttpHeaders({
-      'Content-Type': 'application/json'
-    });
+    return new HttpHeaders(this.authService.getAuthHeaders());
   }
 
   // Dashboard
