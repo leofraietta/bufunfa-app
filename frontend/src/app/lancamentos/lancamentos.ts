@@ -186,7 +186,16 @@ export class LancamentosComponent implements OnInit {
     this.aplicarFiltros();
   }
 
-  getTipoLancamentoText(tipo: number): string {
+  getTipoLancamentoText(tipo: any): string {
+    // Se for string, converter para número
+    if (typeof tipo === 'string') {
+      switch (tipo.toLowerCase()) {
+        case 'receita': return 'Receita';
+        case 'despesa': return 'Despesa';
+        default: return tipo;
+      }
+    }
+    // Se for número, usar o serviço
     return this.apiService.getTipoLancamentoText(tipo);
   }
 
@@ -203,6 +212,22 @@ export class LancamentosComponent implements OnInit {
   }
 
   getStatusText(lancamento: Lancamento): string {
+    // Verificar se tem campo status do backend
+    if (lancamento.status) {
+      if (typeof lancamento.status === 'string') {
+        return lancamento.status;
+      }
+      // Mapear status numérico
+      switch (lancamento.status) {
+        case 1: return 'Provisional';
+        case 2: return 'Realizado';
+        case 3: return 'Cancelado';
+        case 4: return 'Quitado';
+        default: return 'Desconhecido';
+      }
+    }
+    
+    // Fallback para propriedades booleanas
     if (lancamento.cancelado) return 'Cancelado';
     if (lancamento.realizado) return 'Realizado';
     if (lancamento.quitado) return 'Quitado';
@@ -249,6 +274,47 @@ export class LancamentosComponent implements OnInit {
           }
         });
       }
+    }
+  }
+
+  getFormattedDate(dateValue: any): string {
+    if (!dateValue) return '';
+    
+    try {
+      let date: Date;
+      
+      if (typeof dateValue === 'string') {
+        // Verificar se é formato brasileiro: dd/MM/yyyy HH:mm:ss
+        const brazilianDateRegex = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/;
+        const match = dateValue.match(brazilianDateRegex);
+        
+        if (match) {
+          // Extrair componentes da data brasileira
+          const [, day, month, year, hour, minute, second] = match;
+          // Converter para formato ISO: yyyy-MM-ddTHH:mm:ss
+          const isoString = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+          date = new Date(isoString);
+        } else {
+          // Tentar conversão padrão
+          date = new Date(dateValue);
+        }
+      } else if (dateValue instanceof Date) {
+        date = dateValue;
+      } else {
+        return '';
+      }
+      
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      console.warn('Erro ao formatar data:', error);
+      return '';
     }
   }
 }

@@ -58,6 +58,7 @@ export class ProvisionamentoComponent implements OnInit {
   provisionamentos: ResumoProvisionamento[] = [];
   resumoGeral: ResumoGeral | null = null;
   isLoading = false;
+  isUsingMockData = true;
   mesAnoSelecionado: string;
   mesesDisponiveis: { value: string; label: string }[] = [];
 
@@ -106,6 +107,7 @@ export class ProvisionamentoComponent implements OnInit {
       this.provisionamentos = this.getMockProvisionamentos();
       this.calculateResumoGeral();
       this.isLoading = false;
+      this.isUsingMockData = this.checkIfMockData();
     }, 1000);
 
     // TODO: Implementar chamada real para API quando estiver disponível
@@ -224,6 +226,32 @@ export class ProvisionamentoComponent implements OnInit {
   verTodosGastos(provisionamento: ResumoProvisionamento) {
     // TODO: Implementar dialog para ver todos os gastos
     console.log('Ver todos os gastos:', provisionamento);
+  }
+
+  checkIfMockData(): boolean {
+    // Verifica se os dados correspondem aos dados mock
+    // Compara com alguns valores específicos dos dados mock
+    const mockData = this.getMockProvisionamentos();
+    
+    if (this.provisionamentos.length !== mockData.length) {
+      return false;
+    }
+    
+    // Verifica se os primeiros valores coincidem com os dados mock
+    for (let i = 0; i < Math.min(2, this.provisionamentos.length); i++) {
+      const current = this.provisionamentos[i];
+      const mock = mockData[i];
+      
+      if (current.categoriaNome === mock.categoriaNome && 
+          current.valorProvisionado === mock.valorProvisionado &&
+          current.valorGastoReal === mock.valorGastoReal) {
+        continue;
+      } else {
+        return false;
+      }
+    }
+    
+    return true;
   }
 }
 

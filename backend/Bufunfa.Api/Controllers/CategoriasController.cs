@@ -5,6 +5,13 @@ using Bufunfa.Api.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
+public class CategoriaCreateDto
+{
+    public string Nome { get; set; } = string.Empty;
+    public string? Descricao { get; set; }
+    public decimal ValorProvisionadoMensal { get; set; }
+}
+
 namespace Bufunfa.Api.Controllers
 {
     [ApiController]
@@ -48,12 +55,37 @@ namespace Bufunfa.Api.Controllers
             return categoria;
         }
 
+        // POST: api/Categorias/test
+        [HttpPost("test")]
+        [AllowAnonymous]
+        public async Task<ActionResult<string>> PostCategoriaTest([FromBody] object data)
+        {
+            Console.WriteLine("=== MÉTODO TEST CHAMADO ===");
+            Console.WriteLine($"Dados recebidos: {System.Text.Json.JsonSerializer.Serialize(data)}");
+            return Ok("Método test funcionando");
+        }
+
         // POST: api/Categorias
         [HttpPost]
-        public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
+        [AllowAnonymous] // Temporariamente para debug
+        public async Task<ActionResult<Categoria>> PostCategoria([FromBody] CategoriaCreateDto dto)
         {
-            var userId = GetUserId();
-            categoria.UsuarioId = userId;
+            Console.WriteLine("=== MÉTODO POST CATEGORIA CHAMADO ===");
+            
+            if (dto == null || string.IsNullOrEmpty(dto.Nome))
+            {
+                return BadRequest(new { error = "Nome da categoria é obrigatório" });
+            }
+
+            var categoria = new Categoria
+            {
+                Nome = dto.Nome,
+                Descricao = dto.Descricao ?? "",
+                ValorProvisionadoMensal = dto.ValorProvisionadoMensal,
+                UsuarioId = 1, // Temporariamente fixo para debug
+                DataCriacao = DateTime.UtcNow,
+                Ativa = true
+            };
 
             _context.Categorias.Add(categoria);
             await _context.SaveChangesAsync();

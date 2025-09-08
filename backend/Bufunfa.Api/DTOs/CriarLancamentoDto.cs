@@ -73,6 +73,8 @@ namespace Bufunfa.Api.DTOs
                     DataInicial = DataInicial,
                     Tipo = Tipo,
                     TipoRecorrencia = TipoRecorrencia,
+                    TipoPeriodicidade = TipoPeriodicidade,
+                    IntervaloDias = IntervaloDias,
                     DataFinal = DataFinal,
                     DiaVencimento = DiaVencimento ?? 1,
                     ProcessarRetroativo = ProcessarRetroativo,

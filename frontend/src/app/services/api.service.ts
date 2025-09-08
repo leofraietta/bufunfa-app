@@ -22,9 +22,12 @@ export interface Conta {
 export interface Categoria {
   id: number;
   nome: string;
-  valorProvisionado: number;
-  contaId: number;
+  descricao?: string;
+  valorProvisionadoMensal: number;
   ativa: boolean;
+  dataCriacao?: Date;
+  dataAtualizacao?: Date;
+  usuarioId?: number;
 }
 
 export interface Lancamento {
@@ -45,6 +48,7 @@ export interface Lancamento {
   realizado: boolean;
   cancelado: boolean;
   quitado: boolean;
+  status?: string | number; // Campo status do backend
 }
 
 export interface FolhaMensal {

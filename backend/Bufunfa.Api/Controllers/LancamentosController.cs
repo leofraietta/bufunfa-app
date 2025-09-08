@@ -80,11 +80,17 @@ namespace Bufunfa.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<Lancamento>> PostLancamento(CriarLancamentoDto criarLancamentoDto)
         {
+            Console.WriteLine("=== MÉTODO POST LANÇAMENTO CHAMADO ===");
+            Console.WriteLine($"TipoPeriodicidade recebido: {criarLancamentoDto.TipoPeriodicidade}");
+            Console.WriteLine($"TipoRecorrencia: {criarLancamentoDto.TipoRecorrencia}");
+            
             var userId = GetUserId();
             
             // Converter DTO para entidade
             var lancamento = criarLancamentoDto.ToLancamento();
             lancamento.UsuarioId = userId;
+            
+            Console.WriteLine($"TipoPeriodicidade na entidade: {lancamento.TipoPeriodicidade}");
 
             var conta = await _context.Contas
                 .Include(c => c.ContaUsuarios)
@@ -189,24 +195,41 @@ namespace Bufunfa.Api.Controllers
 
         // PUT: api/Lancamentos/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLancamento(int id, Lancamento lancamento)
+        public async Task<IActionResult> PutLancamento(int id, AtualizarLancamentoDto atualizarDto)
         {
-            if (id != lancamento.Id)
+            if (id != atualizarDto.Id)
             {
-                return BadRequest();
+                return BadRequest("ID do lançamento não confere.");
             }
 
             var userId = GetUserId();
-            if (lancamento.UsuarioId != userId)
+            
+            // Buscar o lançamento existente
+            var lancamento = await _context.Lancamentos
+                .FirstOrDefaultAsync(l => l.Id == id && l.UsuarioId == userId);
+
+            if (lancamento == null)
             {
-                return Forbid();
+                return NotFound("Lançamento não encontrado ou não pertence ao usuário.");
             }
 
-            _context.Entry(lancamento).State = EntityState.Modified;
+            // Verificar se a conta existe e pertence ao usuário
+            var conta = await _context.Contas
+                .Include(c => c.ContaUsuarios)
+                .FirstOrDefaultAsync(c => c.Id == atualizarDto.ContaId && c.ContaUsuarios.Any(cu => cu.UsuarioId == userId && cu.Ativo));
+            
+            if (conta == null)
+            {
+                return BadRequest("Conta não encontrada ou não pertence ao usuário.");
+            }
+
+            // Aplicar as alterações do DTO ao lançamento existente
+            atualizarDto.AplicarAlteracoes(lancamento);
 
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -219,8 +242,43 @@ namespace Bufunfa.Api.Controllers
                     throw;
                 }
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao atualizar lançamento: {ex.Message}");
+            }
+        }
 
-            return NoContent();
+        // POST: api/Lancamentos/5/realizar
+        [HttpPost("{id}/realizar")]
+        public async Task<IActionResult> RealizarLancamento(int id)
+        {
+            var userId = GetUserId();
+            
+            var lancamento = await _context.Lancamentos
+                .FirstOrDefaultAsync(l => l.Id == id && l.UsuarioId == userId);
+            
+            if (lancamento == null)
+            {
+                return NotFound("Lançamento não encontrado ou não pertence ao usuário.");
+            }
+            
+            if (lancamento.Status == StatusLancamento.Realizado)
+            {
+                return BadRequest("Lançamento já foi realizado.");
+            }
+            
+            // Marcar como realizado
+            lancamento.Status = StatusLancamento.Realizado;
+            
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Lançamento realizado com sucesso." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao realizar lançamento: {ex.Message}");
+            }
         }
 
         // DELETE: api/Lancamentos/5

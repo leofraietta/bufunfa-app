@@ -32,6 +32,7 @@ export class DashboardComponent implements OnInit {
   dashboardData: DashboardData | null = null;
   isLoading = true;
   error: string | null = null;
+  isUsingMockData = false;
 
   constructor(
     private apiService: ApiService,
@@ -58,11 +59,14 @@ export class DashboardComponent implements OnInit {
       next: (data) => {
         this.dashboardData = data;
         this.isLoading = false;
+        // Se os dados são exatamente iguais aos mock data, provavelmente são dados ilustrativos
+        this.isUsingMockData = this.checkIfMockData(data);
       },
       error: (error) => {
         console.error('Erro ao carregar dados do dashboard:', error);
         this.isLoading = false;
         this.error = null; // Clear error to show fallback data
+        this.isUsingMockData = true; // Fallback sempre usa dados mock
         
         // O fallback já é tratado no serviço, então não precisamos fazer nada aqui
         // A mensagem de aviso será mostrada apenas se necessário
@@ -130,6 +134,15 @@ export class DashboardComponent implements OnInit {
       console.warn('Erro ao formatar data:', error);
       return '';
     }
+  }
+
+  checkIfMockData(data: DashboardData): boolean {
+    // Verifica se os dados são exatamente iguais aos dados mock
+    const mockData = this.apiService.getMockDashboardData();
+    return data.saldoTotal === mockData.saldoTotal &&
+           data.receitasMensais === mockData.receitasMensais &&
+           data.despesasMensais === mockData.despesasMensais &&
+           data.projecaoSaldo === mockData.projecaoSaldo;
   }
 
   logout() {

@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, NativeDateAdapter, DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api.service';
 
@@ -42,7 +43,8 @@ export interface LancamentoDialogData {
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatIconModule
   ],
   providers: [
     { provide: DateAdapter, useClass: NativeDateAdapter },
@@ -149,7 +151,7 @@ export class LancamentoDialogComponent implements OnInit {
     return this.fb.group({
       descricao: ['', [Validators.required, Validators.minLength(2)]],
       tipo: ['', Validators.required],
-      valorProvisionado: [0, [Validators.required, Validators.min(0.01)]],
+      valorProvisionado: [null, [Validators.required, Validators.min(0.01)]],
       valorReal: [null],
       data: [new Date(), Validators.required],
       tipoRecorrencia: ['', Validators.required],
@@ -163,24 +165,138 @@ export class LancamentoDialogComponent implements OnInit {
   }
 
   populateForm(lancamento: any) {
+    console.log('Preenchendo formulário com lançamento:', lancamento);
+    
+    // Converter data do formato brasileiro para Date object
+    let dataFormatada = new Date();
+    if (lancamento.dataInicial || lancamento.data) {
+      const dataString = lancamento.dataInicial || lancamento.data;
+      if (typeof dataString === 'string') {
+        // Verificar se é formato brasileiro: dd/MM/yyyy HH:mm:ss
+        const brazilianDateRegex = /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/;
+        const match = dataString.match(brazilianDateRegex);
+        
+        if (match) {
+          const [, day, month, year, hour, minute, second] = match;
+          dataFormatada = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hour), parseInt(minute), parseInt(second));
+        } else {
+          dataFormatada = new Date(dataString);
+        }
+      } else {
+        dataFormatada = new Date(dataString);
+      }
+    }
+    
+    // Mapear status numérico para string se necessário
+    let statusMapeado = 'Provisional';
+    if (lancamento.status) {
+      switch (lancamento.status) {
+        case 1:
+          statusMapeado = 'Provisional';
+          break;
+        case 2:
+          statusMapeado = 'Realizado';
+          break;
+        case 3:
+          statusMapeado = 'Cancelado';
+          break;
+        case 4:
+          statusMapeado = 'Quitado';
+          break;
+        default:
+          statusMapeado = lancamento.status;
+      }
+    }
+
+    // Converter strings do backend para valores numéricos esperados pelos dropdowns
+    let tipoNumerico = lancamento.tipo;
+    if (typeof lancamento.tipo === 'string') {
+      switch (lancamento.tipo.toLowerCase()) {
+        case 'receita':
+          tipoNumerico = 1;
+          break;
+        case 'despesa':
+          tipoNumerico = 2;
+          break;
+        default:
+          tipoNumerico = parseInt(lancamento.tipo) || 1;
+      }
+    }
+
+    let tipoRecorrenciaNumerico = lancamento.tipoRecorrencia;
+    if (typeof lancamento.tipoRecorrencia === 'string') {
+      switch (lancamento.tipoRecorrencia.toLowerCase()) {
+        case 'esporadico':
+          tipoRecorrenciaNumerico = 1;
+          break;
+        case 'recorrente':
+          tipoRecorrenciaNumerico = 2;
+          break;
+        case 'parcelado':
+          tipoRecorrenciaNumerico = 3;
+          break;
+        default:
+          tipoRecorrenciaNumerico = parseInt(lancamento.tipoRecorrencia) || 1;
+      }
+    }
+
+    let tipoPeriodicidadeNumerico = lancamento.tipoPeriodicidade;
+    if (typeof lancamento.tipoPeriodicidade === 'string') {
+      switch (lancamento.tipoPeriodicidade.toLowerCase()) {
+        case 'semanal':
+          tipoPeriodicidadeNumerico = 1;
+          break;
+        case 'quinzenal':
+          tipoPeriodicidadeNumerico = 2;
+          break;
+        case 'mensal':
+          tipoPeriodicidadeNumerico = 3;
+          break;
+        case 'bimestral':
+          tipoPeriodicidadeNumerico = 4;
+          break;
+        case 'trimestral':
+          tipoPeriodicidadeNumerico = 5;
+          break;
+        case 'semestral':
+          tipoPeriodicidadeNumerico = 6;
+          break;
+        case 'anual':
+          tipoPeriodicidadeNumerico = 7;
+          break;
+        case 'tododiautl':
+          tipoPeriodicidadeNumerico = 8;
+          break;
+        case 'personalizado':
+          tipoPeriodicidadeNumerico = 9;
+          break;
+        default:
+          tipoPeriodicidadeNumerico = parseInt(lancamento.tipoPeriodicidade) || null;
+      }
+    }
+    
     this.lancamentoForm.patchValue({
       descricao: lancamento.descricao,
-      tipo: lancamento.tipo,
+      tipo: tipoNumerico,
       valorProvisionado: lancamento.valorProvisionado || lancamento.valor,
       valorReal: lancamento.valorReal,
-      data: lancamento.data ? new Date(lancamento.data) : new Date(),
-      tipoRecorrencia: lancamento.tipoRecorrencia,
-      status: lancamento.status || 'Provisional',
-      tipoPeriodicidade: lancamento.tipoPeriodicidade,
+      data: dataFormatada,
+      tipoRecorrencia: tipoRecorrenciaNumerico,
+      status: statusMapeado,
+      tipoPeriodicidade: tipoPeriodicidadeNumerico,
       intervaloDias: lancamento.intervaloDias,
-      numeroParcelas: lancamento.numeroParcelas,
+      numeroParcelas: lancamento.quantidadeParcelas || lancamento.numeroParcelas,
       contaId: lancamento.contaId,
       categoriaId: lancamento.categoriaId
     });
-    this.onTipoRecorrenciaChange(lancamento.tipoRecorrencia);
     
-    if (lancamento.tipoPeriodicidade) {
-      this.onPeriodicidadeChange(lancamento.tipoPeriodicidade);
+    console.log('Valores definidos no formulário:', this.lancamentoForm.value);
+    
+    // Atualizar flags baseadas no tipo de recorrência
+    this.onTipoRecorrenciaChange(tipoRecorrenciaNumerico);
+    
+    if (tipoPeriodicidadeNumerico) {
+      this.onPeriodicidadeChange(tipoPeriodicidadeNumerico);
     }
     
     // Atualizar os campos de moeda com formatação adequada
@@ -237,15 +353,22 @@ export class LancamentoDialogComponent implements OnInit {
     this.isParcelada = tipo === 3;
     this.isRecorrente = tipo === 2;
     
+    console.log('Mudança de tipo de recorrência:', tipo, 'isRecorrente:', this.isRecorrente);
+    
     if (this.isParcelada) {
       // Adicionar validações para parcelada
       this.lancamentoForm.get('numeroParcelas')?.setValidators([Validators.required, Validators.min(1)]);
       // Limpar campos de recorrente
       this.lancamentoForm.get('tipoPeriodicidade')?.clearValidators();
+      this.lancamentoForm.get('tipoPeriodicidade')?.setValue(null);
       this.lancamentoForm.get('intervaloDias')?.clearValidators();
+      this.lancamentoForm.get('intervaloDias')?.setValue(null);
     } else if (this.isRecorrente) {
       // Adicionar validações para recorrente
       this.lancamentoForm.get('tipoPeriodicidade')?.setValidators([Validators.required]);
+      // Sempre definir valor padrão para periodicidade
+      this.lancamentoForm.get('tipoPeriodicidade')?.setValue('Mensal');
+      console.log('Valor de periodicidade definido como:', this.lancamentoForm.get('tipoPeriodicidade')?.value);
       // Limpar campos de parcelada
       this.lancamentoForm.get('numeroParcelas')?.clearValidators();
       this.lancamentoForm.get('numeroParcelas')?.setValue(null);
@@ -284,26 +407,55 @@ export class LancamentoDialogComponent implements OnInit {
     this.lancamentoForm.get('intervaloDias')?.updateValueAndValidity();
   }
 
+  getTipoNumerico(tipo: string): number {
+    switch (tipo) {
+      case 'Receita': return 1;
+      case 'Despesa': return 2;
+      default: return parseInt(tipo) || 1;
+    }
+  }
+
+  getTipoRecorrenciaNumerico(tipoRecorrencia: string): number {
+    switch (tipoRecorrencia) {
+      case 'Esporadico': return 1;
+      case 'Recorrente': return 2;
+      case 'Parcelado': return 3;
+      default: return parseInt(tipoRecorrencia) || 1;
+    }
+  }
+
   onSave() {
     if (this.lancamentoForm.valid) {
       this.isLoading = true;
       const formData = this.lancamentoForm.value;
       
-      // Preparar dados para envio
+      console.log('Dados do formulário antes do envio:', formData);
+      console.log('tipoPeriodicidade no form:', formData.tipoPeriodicidade);
+      console.log('Valor atual no controle:', this.lancamentoForm.get('tipoPeriodicidade')?.value);
+      
+      // Preparar dados para envio - converter strings para números quando necessário
       const lancamentoData = {
+        ...(this.isEdit && { id: this.data.lancamento.id }), // Incluir ID apenas para edição
         descricao: formData.descricao,
-        tipo: formData.tipo,
+        tipo: typeof formData.tipo === 'string' ? this.getTipoNumerico(formData.tipo) : formData.tipo,
         valorProvisionado: formData.valorProvisionado,
         valorReal: formData.valorReal,
-        data: formData.data,
-        tipoRecorrencia: formData.tipoRecorrencia,
-        status: formData.status,
+        dataInicial: formData.data,
+        tipoRecorrencia: typeof formData.tipoRecorrencia === 'string' ? this.getTipoRecorrenciaNumerico(formData.tipoRecorrencia) : formData.tipoRecorrencia,
+        status: formData.status || 1, // Default para Provisionado se não especificado
         tipoPeriodicidade: formData.tipoPeriodicidade,
         intervaloDias: formData.intervaloDias,
-        numeroParcelas: formData.numeroParcelas,
+        quantidadeParcelas: formData.numeroParcelas,
         contaId: formData.contaId,
-        categoriaId: formData.categoriaId
+        categoriaId: formData.categoriaId,
+        dataFinal: formData.dataFinal,
+        diaVencimento: formData.diaVencimento,
+        ajustarDiaUtil: formData.ajustarDiaUtil || false,
+        processarRetroativo: formData.processarRetroativo || false
       };
+      
+      console.log('Dados preparados para envio:', lancamentoData);
+      console.log('tipoPeriodicidade sendo enviado:', lancamentoData.tipoPeriodicidade);
 
       const operation = this.isEdit 
         ? this.apiService.updateLancamento(this.data.lancamento.id, lancamentoData)
@@ -327,4 +479,3 @@ export class LancamentoDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 }
-

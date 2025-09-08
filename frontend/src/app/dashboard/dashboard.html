@@ -36,6 +36,20 @@
     </button>
   </div>
 
+  <!-- Data Source Notice -->
+  <div class="data-notice" *ngIf="!isLoading && !error && isUsingMockData">
+    <mat-card class="notice-card">
+      <mat-card-content>
+        <div class="notice-content">
+          <mat-icon class="notice-icon">info</mat-icon>
+          <div class="notice-text">
+            <span><strong>Dados Ilustrativos</strong> - Para ver seus dados reais, cadastre: <strong>Contas</strong>, <strong>Categorias</strong> e <strong>Lançamentos</strong>.</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <!-- Main Content -->
   <div class="dashboard-content" *ngIf="!isLoading && !error">
     <div class="summary-cards">
@@ -134,7 +148,7 @@
               Gerenciar Contas
             </button>
             <button mat-raised-button routerLink="/provisionamento">
-              <mat-icon>shopping_cart</mat-icon>
+              <mat-icon>trending_up</mat-icon>
               Provisionamento
             </button>
           </div>

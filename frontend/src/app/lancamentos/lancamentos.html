@@ -97,7 +97,7 @@
               <th mat-header-cell *matHeaderCellDef>Data</th>
               <td mat-cell *matCellDef="let lancamento">
                 <span class="data-lancamento">
-                  {{ (lancamento.data || lancamento.dataInicial) | date:'dd/MM/yyyy' }}
+                  {{ getFormattedDate(lancamento.data || lancamento.dataInicial) }}
                 </span>
               </td>
             </ng-container>

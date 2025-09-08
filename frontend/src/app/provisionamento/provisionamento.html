@@ -17,6 +17,20 @@
     </div>
   </div>
 
+  <!-- Mensagem de dados ilustrativos -->
+  <div class="data-notice" *ngIf="isUsingMockData">
+    <mat-card class="notice-card">
+      <mat-card-content>
+        <div class="notice-content">
+          <mat-icon class="notice-icon">info</mat-icon>
+          <div class="notice-text">
+            <span><strong>Dados Ilustrativos</strong> - Para ver dados reais, cadastre: <strong>Contas</strong>, <strong>Categorias com valores provisionados</strong> e <strong>Lançamentos realizados</strong>.</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
   <!-- Resumo Geral -->
   <div class="resumo-geral" *ngIf="resumoGeral">
     <mat-card class="resumo-card">

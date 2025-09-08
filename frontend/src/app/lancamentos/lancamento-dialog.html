@@ -1,163 +1,193 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Editar Lançamento' : 'Novo Lançamento' }}</h2>
+<div class="modern-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>receipt</mat-icon>
+    {{ isEdit ? 'Editar Lançamento' : 'Novo Lançamento' }}
+  </h2>
 
-<mat-dialog-content>
-  <form [formGroup]="lancamentoForm" class="lancamento-form">
+  <mat-dialog-content>
+    <form [formGroup]="lancamentoForm" class="modern-form">
     
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Descrição</mat-label>
-      <input matInput formControlName="descricao" placeholder="Ex: Salário, Supermercado, Aluguel">
-      <mat-error *ngIf="lancamentoForm.get('descricao')?.hasError('required')">
-        Descrição é obrigatória
-      </mat-error>
-    </mat-form-field>
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
+          <mat-label>Descrição</mat-label>
+          <input matInput formControlName="descricao" placeholder="Ex: Salário, Supermercado, Aluguel">
+          <mat-icon matSuffix>edit</mat-icon>
+          <mat-error *ngIf="lancamentoForm.get('descricao')?.hasError('required')">
+            Descrição é obrigatória
+          </mat-error>
+        </mat-form-field>
+      </div>
 
-    <div class="form-row">
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Tipo</mat-label>
-        <mat-select formControlName="tipo">
-          <mat-option [value]="1">Receita</mat-option>
-          <mat-option [value]="2">Despesa</mat-option>
-        </mat-select>
-        <mat-error *ngIf="lancamentoForm.get('tipo')?.hasError('required')">
-          Tipo é obrigatório
-        </mat-error>
-      </mat-form-field>
+      <div class="form-row double">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="tipo">
+            <mat-option [value]="1">Receita</mat-option>
+            <mat-option [value]="2">Despesa</mat-option>
+          </mat-select>
+          <mat-icon matSuffix>category</mat-icon>
+          <mat-error *ngIf="lancamentoForm.get('tipo')?.hasError('required')">
+            Tipo é obrigatório
+          </mat-error>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Valor Provisionado</mat-label>
-        <input matInput type="text" formControlName="valorProvisionado" 
-               placeholder="10.000,00" 
-               (input)="onCurrencyInput($event, 'valorProvisionado')"
-               (blur)="onCurrencyBlur($event, 'valorProvisionado')">
-        <span matTextPrefix>R$ </span>
-        <mat-error *ngIf="lancamentoForm.get('valorProvisionado')?.hasError('required')">
-          Valor é obrigatório
-        </mat-error>
-      </mat-form-field>
-    </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Valor Provisionado</mat-label>
+          <input matInput type="text" formControlName="valorProvisionado" 
+                 placeholder="1.000,00" 
+                 (input)="onCurrencyInput($event, 'valorProvisionado')"
+                 (blur)="onCurrencyBlur($event, 'valorProvisionado')">
+          <span matTextPrefix>R$ </span>
+          <mat-icon matSuffix>account_balance_wallet</mat-icon>
+          <mat-error *ngIf="lancamentoForm.get('valorProvisionado')?.hasError('required')">
+            Valor é obrigatório
+          </mat-error>
+        </mat-form-field>
+      </div>
 
-    <div class="form-row">
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Valor Real</mat-label>
-        <input matInput type="text" formControlName="valorReal" 
-               placeholder="10.000,00" 
-               (input)="onCurrencyInput($event, 'valorReal')"
-               (blur)="onCurrencyBlur($event, 'valorReal')">
-        <span matTextPrefix>R$ </span>
-        <mat-hint>Deixe vazio se ainda não foi realizado</mat-hint>
-      </mat-form-field>
+      <div class="form-row double">
+        <mat-form-field appearance="outline">
+          <mat-label>Valor Real</mat-label>
+          <input matInput type="text" formControlName="valorReal" 
+                 placeholder="1.000,00" 
+                 (input)="onCurrencyInput($event, 'valorReal')"
+                 (blur)="onCurrencyBlur($event, 'valorReal')">
+          <span matTextPrefix>R$ </span>
+          <mat-icon matSuffix>paid</mat-icon>
+          <mat-hint>Deixe vazio se ainda não foi realizado</mat-hint>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Data</mat-label>
-        <input matInput [matDatepicker]="dataPicker" formControlName="data">
-        <mat-datepicker-toggle matIconSuffix [for]="dataPicker"></mat-datepicker-toggle>
-        <mat-datepicker #dataPicker></mat-datepicker>
-        <mat-error *ngIf="lancamentoForm.get('data')?.hasError('required')">
-          Data é obrigatória
-        </mat-error>
-      </mat-form-field>
-    </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Data</mat-label>
+          <input matInput [matDatepicker]="dataPicker" formControlName="data">
+          <mat-datepicker-toggle matIconSuffix [for]="dataPicker"></mat-datepicker-toggle>
+          <mat-datepicker #dataPicker></mat-datepicker>
+          <mat-error *ngIf="lancamentoForm.get('data')?.hasError('required')">
+            Data é obrigatória
+          </mat-error>
+        </mat-form-field>
+      </div>
 
-    <div class="form-row">
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Tipo de Recorrência</mat-label>
-        <mat-select formControlName="tipoRecorrencia" (selectionChange)="onTipoRecorrenciaChange($event.value)">
-          <mat-option [value]="1">Esporádica</mat-option>
-          <mat-option [value]="2">Recorrente</mat-option>
-          <mat-option [value]="3">Parcelada</mat-option>
-        </mat-select>
-        <mat-error *ngIf="lancamentoForm.get('tipoRecorrencia')?.hasError('required')">
-          Tipo de recorrência é obrigatório
-        </mat-error>
-      </mat-form-field>
+      <div class="form-row double">
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de Recorrência</mat-label>
+          <mat-select formControlName="tipoRecorrencia" (selectionChange)="onTipoRecorrenciaChange($event.value)">
+            <mat-option [value]="1">Esporádica</mat-option>
+            <mat-option [value]="2">Recorrente</mat-option>
+            <mat-option [value]="3">Parcelada</mat-option>
+          </mat-select>
+          <mat-icon matSuffix>repeat</mat-icon>
+          <mat-error *ngIf="lancamentoForm.get('tipoRecorrencia')?.hasError('required')">
+            Tipo de recorrência é obrigatório
+          </mat-error>
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="half-width">
-        <mat-label>Status</mat-label>
-        <mat-select formControlName="status">
-          <mat-option value="Provisional">Provisional</mat-option>
-          <mat-option value="Realizado">Realizado</mat-option>
-          <mat-option value="Cancelado">Cancelado</mat-option>
-          <mat-option value="Quitado">Quitado</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            <mat-option value="Provisional">Provisional</mat-option>
+            <mat-option value="Realizado">Realizado</mat-option>
+            <mat-option value="Cancelado">Cancelado</mat-option>
+            <mat-option value="Quitado">Quitado</mat-option>
+          </mat-select>
+          <mat-icon matSuffix>flag</mat-icon>
+        </mat-form-field>
+      </div>
 
-    <!-- Campos específicos para Recorrente -->
-    <div *ngIf="isRecorrente" class="recorrente-fields">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Periodicidade</mat-label>
-        <mat-select formControlName="tipoPeriodicidade" (selectionChange)="onPeriodicidadeChange($event.value)">
-          <mat-option value="Semanal">Semanal</mat-option>
-          <mat-option value="Quinzenal">Quinzenal</mat-option>
-          <mat-option value="Mensal">Mensal</mat-option>
-          <mat-option value="Bimestral">Bimestral</mat-option>
-          <mat-option value="Trimestral">Trimestral</mat-option>
-          <mat-option value="Semestral">Semestral</mat-option>
-          <mat-option value="Anual">Anual</mat-option>
-          <mat-option value="TodoDiaUtil">Todo Dia Útil</mat-option>
-          <mat-option value="Personalizado">Personalizado (1-6 dias)</mat-option>
-        </mat-select>
-      </mat-form-field>
+      <!-- Campos específicos para Recorrente -->
+      <div *ngIf="isRecorrente" class="special-section" data-title="Configurações de Recorrência">
+        <div class="form-row single">
+          <mat-form-field appearance="outline">
+            <mat-label>Periodicidade</mat-label>
+            <mat-select formControlName="tipoPeriodicidade" (selectionChange)="onPeriodicidadeChange($event.value)">
+              <mat-option value="Semanal">Semanal</mat-option>
+              <mat-option value="Quinzenal">Quinzenal</mat-option>
+              <mat-option value="Mensal">Mensal</mat-option>
+              <mat-option value="Bimestral">Bimestral</mat-option>
+              <mat-option value="Trimestral">Trimestral</mat-option>
+              <mat-option value="Semestral">Semestral</mat-option>
+              <mat-option value="Anual">Anual</mat-option>
+              <mat-option value="TodoDiaUtil">Todo Dia Útil</mat-option>
+              <mat-option value="Personalizado">Personalizado (1-6 dias)</mat-option>
+            </mat-select>
+            <mat-icon matSuffix>access_time</mat-icon>
+          </mat-form-field>
+        </div>
 
-      <mat-form-field *ngIf="isPersonalizado" appearance="outline" class="full-width">
-        <mat-label>Intervalo em Dias</mat-label>
-        <input matInput type="number" formControlName="intervaloDias" placeholder="1-6 dias" min="1" max="6">
-        <mat-hint>Para intervalos maiores que 6 dias, use periodicidade semanal</mat-hint>
-        <mat-error *ngIf="lancamentoForm.get('intervaloDias')?.hasError('required')">
-          Intervalo é obrigatório para periodicidade personalizada
-        </mat-error>
-        <mat-error *ngIf="lancamentoForm.get('intervaloDias')?.hasError('min') || lancamentoForm.get('intervaloDias')?.hasError('max')">
-          Intervalo deve ser entre 1 e 6 dias
-        </mat-error>
-      </mat-form-field>
-    </div>
+        <div *ngIf="isPersonalizado" class="form-row single">
+          <mat-form-field appearance="outline">
+            <mat-label>Intervalo em Dias</mat-label>
+            <input matInput type="number" formControlName="intervaloDias" placeholder="1-6 dias" min="1" max="6">
+            <mat-icon matSuffix>timer</mat-icon>
+            <mat-hint>Para intervalos maiores que 6 dias, use periodicidade semanal</mat-hint>
+            <mat-error *ngIf="lancamentoForm.get('intervaloDias')?.hasError('required')">
+              Intervalo é obrigatório para periodicidade personalizada
+            </mat-error>
+            <mat-error *ngIf="lancamentoForm.get('intervaloDias')?.hasError('min') || lancamentoForm.get('intervaloDias')?.hasError('max')">
+              Intervalo deve ser entre 1 e 6 dias
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
 
-    <!-- Campos específicos para Parcelada -->
-    <div *ngIf="isParcelada" class="parcelada-fields">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Número de Parcelas</mat-label>
-        <input matInput type="number" formControlName="numeroParcelas" placeholder="Ex: 12" min="1">
-        <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('required')">
-          Número de parcelas é obrigatório
-        </mat-error>
-        <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('min')">
-          Deve ter pelo menos 1 parcela
-        </mat-error>
-      </mat-form-field>
-    </div>
+      <!-- Campos específicos para Parcelada -->
+      <div *ngIf="isParcelada" class="special-section" data-title="Configurações de Parcelamento">
+        <div class="form-row single">
+          <mat-form-field appearance="outline">
+            <mat-label>Número de Parcelas</mat-label>
+            <input matInput type="number" formControlName="numeroParcelas" placeholder="Ex: 12" min="1">
+            <mat-icon matSuffix>format_list_numbered</mat-icon>
+            <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('required')">
+              Número de parcelas é obrigatório
+            </mat-error>
+            <mat-error *ngIf="lancamentoForm.get('numeroParcelas')?.hasError('min')">
+              Deve ter pelo menos 1 parcela
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Conta</mat-label>
-      <mat-select formControlName="contaId">
-        <mat-option *ngFor="let conta of contas" [value]="conta.id">
-          {{ conta.nome }}
-        </mat-option>
-      </mat-select>
-      <mat-error *ngIf="lancamentoForm.get('contaId')?.hasError('required')">
-        Conta é obrigatória
-      </mat-error>
-    </mat-form-field>
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
+          <mat-label>Conta</mat-label>
+          <mat-select formControlName="contaId">
+            <mat-option *ngFor="let conta of contas" [value]="conta.id">
+              {{ conta.nome }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>account_balance</mat-icon>
+          <mat-error *ngIf="lancamentoForm.get('contaId')?.hasError('required')">
+            Conta é obrigatória
+          </mat-error>
+        </mat-form-field>
+      </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Categoria (Opcional)</mat-label>
-      <mat-select formControlName="categoriaId">
-        <mat-option [value]="null">Nenhuma</mat-option>
-        <mat-option *ngFor="let categoria of categorias" [value]="categoria.id">
-          {{ categoria.nome }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
+          <mat-label>Categoria (Opcional)</mat-label>
+          <mat-select formControlName="categoriaId">
+            <mat-option [value]="null">Nenhuma</mat-option>
+            <mat-option *ngFor="let categoria of categorias" [value]="categoria.id">
+              {{ categoria.nome }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matSuffix>category</mat-icon>
+        </mat-form-field>
+      </div>
 
-  </form>
-</mat-dialog-content>
+    </form>
+  </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
-  <button mat-raised-button color="primary" 
-          [disabled]="lancamentoForm.invalid || isLoading" 
-          (click)="onSave()">
-    <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
-    {{ isEdit ? 'Atualizar' : 'Criar' }}
-  </button>
-</mat-dialog-actions>
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isLoading">
+      Cancelar
+    </button>
+    <button mat-raised-button color="primary" 
+            [disabled]="lancamentoForm.invalid || isLoading" 
+            (click)="onSave()">
+      <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+      <span *ngIf="!isLoading">{{ isEdit ? 'Atualizar' : 'Criar' }}</span>
+    </button>
+  </mat-dialog-actions>
+</div>
 

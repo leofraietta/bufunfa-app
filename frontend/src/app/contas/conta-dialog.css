@@ -1,41 +1,39 @@
-.conta-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 400px;
-  padding: 16px 0;
+@import '../shared/styles/dialog-styles.scss';
+
+/* Estilos para opções do dropdown com ícones */
+mat-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  
+  mat-icon {
+    font-size: 18px !important;
+    color: #1976d2 !important;
+    margin-right: 8px !important;
+  }
+  
+  span {
+    display: inline-block !important;
+  }
 }
 
-.full-width {
-  width: 100%;
+/* Corrigir alinhamento do texto de erro com o prefixo R$ */
+mat-form-field.mat-form-field-appearance-outline .mat-form-field-prefix {
+  top: 0;
+  align-self: center;
 }
 
-.cartao-fields {
-  border-top: 1px solid #e0e0e0;
-  padding-top: 16px;
-  margin-top: 8px;
+mat-form-field .mat-form-field-error {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
 }
 
-.cartao-fields::before {
-  content: "Configurações do Cartão de Crédito";
-  display: block;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 16px;
-  font-weight: 500;
+/* Corrigir alinhamento vertical do label com o prefixo */
+mat-form-field.mat-form-field-appearance-outline .mat-form-field-label {
+  top: 1.28125em;
 }
 
-mat-dialog-content {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-mat-dialog-actions {
-  padding: 16px 0 0 0;
-  margin: 0;
-}
-
-mat-spinner {
-  margin-right: 8px;
+mat-form-field.mat-form-field-appearance-outline.mat-form-field-can-float.mat-form-field-should-float .mat-form-field-label {
+  transform: translateY(-1.59375em) scale(0.75);
 }
 

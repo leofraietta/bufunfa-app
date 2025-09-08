@@ -34,7 +34,7 @@ export class CategoriasComponent implements OnInit {
   categorias: Categoria[] = [];
   isLoading = false;
   error: string | null = null;
-  displayedColumns: string[] = ['nome', 'valorProvisionado', 'conta', 'status', 'acoes'];
+  displayedColumns: string[] = ['nome', 'valorProvisionadoMensal', 'status', 'acoes'];
 
   constructor(
     private dialog: MatDialog,
@@ -63,22 +63,19 @@ export class CategoriasComponent implements OnInit {
           { 
             id: 1, 
             nome: 'Alimentação', 
-            valorProvisionado: 800.00,
-            contaId: 1,
+            valorProvisionadoMensal: 800.00,
             ativa: true
           },
           { 
             id: 2, 
             nome: 'Transporte', 
-            valorProvisionado: 300.00,
-            contaId: 1,
+            valorProvisionadoMensal: 300.00,
             ativa: true
           },
           { 
             id: 3, 
             nome: 'Lazer', 
-            valorProvisionado: 200.00,
-            contaId: 1,
+            valorProvisionadoMensal: 200.00,
             ativa: false
           }
         ];
@@ -146,11 +143,7 @@ export class CategoriasComponent implements OnInit {
   getTotalProvisionado(): number {
     return this.categorias
       .filter(categoria => categoria.ativa)
-      .reduce((total, categoria) => total + categoria.valorProvisionado, 0);
+      .reduce((total, categoria) => total + categoria.valorProvisionadoMensal, 0);
   }
 
-  getContaNome(contaId: number): string {
-    // TODO: Implementar busca do nome da conta
-    return `Conta #${contaId}`;
-  }
 }

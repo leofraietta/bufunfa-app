@@ -296,3 +296,41 @@
   }
 }
 
+/* Data Notice Styles */
+.data-notice {
+  margin-bottom: 20px;
+}
+
+.notice-card {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+.notice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notice-icon {
+  color: #2196f3;
+  font-size: 20px;
+  margin-top: 2px;
+}
+
+.notice-text {
+  flex: 1;
+}
+
+.notice-text span {
+  color: #1976d2;
+  font-size: 13px;
+  line-height: 1.4;
+  display: inline;
+}
+
+.notice-text strong {
+  color: #1565c0;
+  font-weight: 600;
+}
+

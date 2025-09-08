@@ -1,13 +1,13 @@
-<div class="categoria-dialog-container">
+<div class="modern-dialog">
   <h2 mat-dialog-title>
     <mat-icon>category</mat-icon>
     {{ isEdit ? 'Editar Categoria' : 'Nova Categoria' }}
   </h2>
 
   <mat-dialog-content>
-    <form [formGroup]="categoriaForm" class="categoria-form">
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+    <form [formGroup]="categoriaForm" class="modern-form">
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
           <mat-label>Nome da Categoria</mat-label>
           <input matInput 
                  formControlName="nome" 
@@ -22,53 +22,52 @@
         </mat-form-field>
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
           <mat-label>Valor Provisionado Mensal</mat-label>
           <input matInput 
-                 type="number" 
-                 formControlName="valorProvisionado" 
-                 placeholder="0,00"
-                 min="0"
-                 step="0.01">
-          <span matPrefix>R$ </span>
+                 type="text" 
+                 formControlName="valorProvisionadoMensal" 
+                 placeholder="300,00"
+                 (input)="onCurrencyInput($event, 'valorProvisionadoMensal')"
+                 (blur)="onCurrencyBlur($event, 'valorProvisionadoMensal')">
+          <span matTextPrefix>R$ </span>
           <mat-icon matSuffix>account_balance_wallet</mat-icon>
           <mat-hint>Valor que você planeja gastar mensalmente nesta categoria</mat-hint>
-          <mat-error *ngIf="categoriaForm.get('valorProvisionado')?.hasError('required')">
+          <mat-error *ngIf="categoriaForm.get('valorProvisionadoMensal')?.hasError('required')">
             Valor provisionado é obrigatório
           </mat-error>
-          <mat-error *ngIf="categoriaForm.get('valorProvisionado')?.hasError('min')">
+          <mat-error *ngIf="categoriaForm.get('valorProvisionadoMensal')?.hasError('min')">
             Valor deve ser maior ou igual a zero
           </mat-error>
         </mat-form-field>
+        <div class="value-suggestions">
+          <span class="suggestion-chip" (click)="setValorProvisionadoMensal(100)">R$ 100,00</span>
+          <span class="suggestion-chip" (click)="setValorProvisionadoMensal(300)">R$ 300,00</span>
+          <span class="suggestion-chip" (click)="setValorProvisionadoMensal(500)">R$ 500,00</span>
+          <span class="suggestion-chip" (click)="setValorProvisionadoMensal(1000)">R$ 1.000,00</span>
+        </div>
       </div>
 
-      <div class="form-row">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Conta Associada</mat-label>
-          <mat-select formControlName="contaId">
-            <mat-option *ngFor="let conta of contas" [value]="conta.id">
-              <div class="conta-option">
-                <mat-icon>{{ conta.tipo === 1 ? 'account_balance' : 'credit_card' }}</mat-icon>
-                <span>{{ conta.nome }}</span>
-              </div>
-            </mat-option>
-          </mat-select>
-          <mat-icon matSuffix>account_balance</mat-icon>
-          <mat-hint>Selecione a conta onde os gastos desta categoria serão registrados</mat-hint>
-          <mat-error *ngIf="categoriaForm.get('contaId')?.hasError('required')">
-            Conta é obrigatória
-          </mat-error>
+      <div class="form-row single">
+        <mat-form-field appearance="outline">
+          <mat-label>Descrição (Opcional)</mat-label>
+          <textarea matInput 
+                    formControlName="descricao" 
+                    placeholder="Detalhes sobre esta categoria..."
+                    rows="3"></textarea>
+          <mat-icon matSuffix>description</mat-icon>
+          <mat-hint>Informações adicionais sobre a categoria</mat-hint>
         </mat-form-field>
       </div>
 
-      <div class="form-row">
+      <div class="form-row single">
         <mat-checkbox formControlName="ativa" color="primary">
           Categoria ativa
         </mat-checkbox>
-        <mat-hint class="checkbox-hint">
+        <div class="custom-hint">
           Categorias inativas não aparecerão nas opções de lançamentos
-        </mat-hint>
+        </div>
       </div>
     </form>
   </mat-dialog-content>

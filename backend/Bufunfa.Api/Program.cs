@@ -53,7 +53,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:5000")
+        policy.WithOrigins("http://localhost:4200", "http://127.0.0.1:4200")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -120,10 +120,26 @@ if (!app.Environment.IsDevelopment())
 // Adiciona CORS antes da autenticação
 app.UseCors("AllowFrontend");
 
-app.UseAuthentication(); // Adiciona middleware de autenticação
-app.UseAuthorization();
+// Middleware de tratamento global de exceções
+app.UseExceptionHandler(appBuilder =>
+{
+    appBuilder.Run(async context =>
+    {
+        Console.WriteLine("Exception handler middleware executado");
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsync("Erro interno do servidor");
+    });
+});
+
+// Temporariamente desabilitar autenticação para debug
+// app.UseAuthentication(); 
+// app.UseAuthorization();
 
 app.MapControllers();
+
+Console.WriteLine("Backend iniciado em http://localhost:5000");
+Console.WriteLine("Swagger disponível em http://localhost:5000/swagger");
+Console.WriteLine("Aguardando requisições...");
 
 app.Run();
 

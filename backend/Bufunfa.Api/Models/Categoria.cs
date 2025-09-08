@@ -11,10 +11,10 @@ namespace Bufunfa.Api.Models
 
         [Required]
         [MaxLength(255)]
-        public string Nome { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         [MaxLength(500)]
-        public string Descricao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
 
         /// <summary>
         /// Valor provisionado mensal para esta categoria
@@ -28,10 +28,9 @@ namespace Bufunfa.Api.Models
         public DateTime? DataAtualizacao { get; set; }
 
         // Chave estrangeira para o usuário
-        [Required]
         public int UsuarioId { get; set; }
         [JsonIgnore]
-        public Usuario Usuario { get; set; }
+        public Usuario? Usuario { get; set; }
 
         // Relacionamento com lançamentos
         [JsonIgnore]

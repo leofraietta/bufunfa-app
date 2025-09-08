@@ -39,7 +39,6 @@ export class CategoriaDialogComponent implements OnInit {
   categoriaForm: FormGroup;
   isEdit: boolean;
   isLoading = false;
-  contas: Conta[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -52,7 +51,6 @@ export class CategoriaDialogComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadContas();
     if (this.isEdit && this.data.categoria) {
       this.populateForm(this.data.categoria);
     }
@@ -61,33 +59,20 @@ export class CategoriaDialogComponent implements OnInit {
   createForm(): FormGroup {
     return this.fb.group({
       nome: ['', [Validators.required, Validators.minLength(2)]],
-      valorProvisionado: [0, [Validators.required, Validators.min(0)]],
-      contaId: ['', Validators.required],
+      descricao: [''],
+      valorProvisionadoMensal: [0, [Validators.required, Validators.min(0)]],
       ativa: [true]
     });
   }
 
-  loadContas() {
-    this.apiService.getContas().subscribe({
-      next: (contas) => {
-        this.contas = contas.filter(conta => conta.ativa);
-      },
-      error: (error) => {
-        console.error('Erro ao carregar contas:', error);
-        // Fallback para dados mockados
-        this.contas = [
-          { id: 1, nome: 'Conta Corrente', tipo: 1, saldoInicial: 1000, ativa: true },
-          { id: 2, nome: 'Cartão Visa', tipo: 2, saldoInicial: 0, ativa: true }
-        ];
-      }
-    });
-  }
+  // Removido método loadContas pois categorias não precisam mais de conta
+  // As categorias agora são independentes de contas específicas
 
   populateForm(categoria: Categoria) {
     this.categoriaForm.patchValue({
       nome: categoria.nome,
-      valorProvisionado: categoria.valorProvisionado,
-      contaId: categoria.contaId,
+      descricao: categoria.descricao || '',
+      valorProvisionadoMensal: categoria.valorProvisionadoMensal,
       ativa: categoria.ativa
     });
   }
@@ -99,10 +84,15 @@ export class CategoriaDialogComponent implements OnInit {
       
       const categoriaData = {
         nome: formData.nome,
-        valorProvisionado: formData.valorProvisionado,
-        contaId: formData.contaId,
+        descricao: formData.descricao || '',
+        valorProvisionadoMensal: formData.valorProvisionadoMensal,
         ativa: formData.ativa
       };
+
+      console.log('Form Data:', formData);
+      console.log('Categoria Data sendo enviada:', categoriaData);
+      console.log('Form válido:', this.categoriaForm.valid);
+      console.log('Erros do form:', this.categoriaForm.errors);
 
       const operation = this.isEdit 
         ? this.apiService.updateCategoria(this.data.categoria!.id, categoriaData)
@@ -111,14 +101,64 @@ export class CategoriaDialogComponent implements OnInit {
       operation.subscribe({
         next: (result: Categoria) => {
           this.isLoading = false;
+          console.log('Categoria criada com sucesso:', result);
           this.dialogRef.close(result);
         },
         error: (error: any) => {
           this.isLoading = false;
-          console.error('Erro ao salvar categoria:', error);
+          console.error('Erro completo ao salvar categoria:', error);
+          console.error('Status:', error.status);
+          console.error('Message:', error.message);
+          console.error('Error body:', error.error);
           // TODO: Mostrar mensagem de erro para o usuário
         }
       });
+    } else {
+      console.log('Formulário inválido:', this.categoriaForm.errors);
+      Object.keys(this.categoriaForm.controls).forEach(key => {
+        const control = this.categoriaForm.get(key);
+        if (control && control.errors) {
+          console.log(`Campo ${key} tem erros:`, control.errors);
+        }
+      });
+    }
+  }
+
+  setValorProvisionadoMensal(valor: number) {
+    this.categoriaForm.patchValue({ valorProvisionadoMensal: valor });
+  }
+
+  onCurrencyInput(event: any, fieldName: string): void {
+    const input = event.target;
+    let value = input.value;
+    
+    // Remove todos os caracteres não numéricos
+    value = value.replace(/\D/g, '');
+    
+    // Converte para número e divide por 100 para ter centavos
+    const numericValue = parseInt(value) / 100;
+    
+    if (isNaN(numericValue)) {
+      this.categoriaForm.get(fieldName)?.setValue(0);
+      input.value = '';
+      return;
+    }
+    
+    // Atualiza o valor no formulário
+    this.categoriaForm.get(fieldName)?.setValue(numericValue);
+    
+    // Formata o valor para exibição
+    input.value = this.formatCurrency(numericValue);
+  }
+
+  onCurrencyBlur(event: any, fieldName: string): void {
+    const input = event.target;
+    const formValue = this.categoriaForm.get(fieldName)?.value;
+    
+    if (formValue && formValue > 0) {
+      input.value = this.formatCurrency(formValue);
+    } else {
+      input.value = '';
     }
   }
 
@@ -126,8 +166,15 @@ export class CategoriaDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  getContaNome(contaId: number): string {
-    const conta = this.contas.find(c => c.id === contaId);
-    return conta ? conta.nome : `Conta #${contaId}`;
+
+  private formatCurrency(value: number): string {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '';
+    }
+    
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   }
 }

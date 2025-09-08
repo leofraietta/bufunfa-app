@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../services/api';
 
@@ -29,7 +30,8 @@ export interface ContaDialogData {
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatIconModule
   ],
   templateUrl: './conta-dialog.html',
   styleUrls: ['./conta-dialog.css']
@@ -51,9 +53,19 @@ export class ContaDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.initializeForm();
+    this.loadContas();
+  }
+
+
+  initializeForm() {
     if (this.isEdit && this.data.conta) {
       this.populateForm(this.data.conta);
     }
+  }
+
+  loadContas() {
+    // TO DO: implementar carregamento de contas
   }
 
   createForm(): FormGroup {
@@ -61,7 +73,7 @@ export class ContaDialogComponent implements OnInit {
       nome: ['', [Validators.required, Validators.minLength(2)]],
       descricao: ['', [Validators.required, Validators.minLength(2)]],
       tipo: ['', Validators.required],
-      saldoInicial: [0, [Validators.required, Validators.min(0)]],
+      saldoInicial: [null, [Validators.required, Validators.min(0)]],
       diaFechamento: [''],
       diaVencimento: ['']
     });
@@ -133,6 +145,48 @@ export class ContaDialogComponent implements OnInit {
 
   onCancel() {
     this.dialogRef.close();
+  }
+
+  onCurrencyInput(event: any, fieldName: string): void {
+    const input = event.target;
+    let value = input.value;
+    
+    // Remove todos os caracteres não numéricos
+    value = value.replace(/\D/g, '');
+    
+    // Converte para número e divide por 100 para ter centavos
+    const numericValue = parseInt(value) / 100;
+    
+    if (isNaN(numericValue)) {
+      this.contaForm.get(fieldName)?.setValue(0);
+      input.value = '';
+      return;
+    }
+    
+    // Atualiza o valor no formulário
+    this.contaForm.get(fieldName)?.setValue(numericValue);
+    
+    // Formata o valor para exibição
+    input.value = this.formatCurrencyForInput(numericValue);
+  }
+
+  onCurrencyBlur(event: any, fieldName: string): void {
+    const input = event.target;
+    const formValue = this.contaForm.get(fieldName)?.value;
+    
+    if (formValue && formValue > 0) {
+      input.value = this.formatCurrencyForInput(formValue);
+    } else {
+      input.value = '';
+    }
+  }
+
+  private formatCurrencyForInput(value: number): string {
+    if (!value || value === 0) return '';
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   }
 }
 
