@@ -432,6 +432,10 @@ export class LancamentoDialogComponent implements OnInit {
       // Converter valores de moeda para números
       const valorProvisionado = this.parseCurrency(formData.valorProvisionado);
       
+      // Converter data para formato ISO local (sem conversão UTC)
+      const dataLocal = new Date(formData.data);
+      const dataISO = new Date(dataLocal.getTime() - (dataLocal.getTimezoneOffset() * 60000)).toISOString();
+      
       // Preparar dados para envio - converter strings para números quando necessário
       const lancamentoData = {
         ...(this.isEdit && { id: this.data.lancamento.id }), // Incluir ID apenas para edição
@@ -439,7 +443,7 @@ export class LancamentoDialogComponent implements OnInit {
         tipo: typeof formData.tipo === 'string' ? this.getTipoNumerico(formData.tipo) : formData.tipo,
         valorProvisionado: valorProvisionado,
         valor: valorProvisionado,
-        dataInicial: formData.data,
+        dataInicial: dataISO,
         tipoRecorrencia: formData.tipoRecorrencia,
         tipoPeriodicidade: formData.tipoPeriodicidade,
         intervaloDias: formData.intervaloDias,

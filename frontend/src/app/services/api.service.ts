@@ -36,9 +36,9 @@ export interface Lancamento {
   valor: number;
   valorProvisionado?: number;
   valorReal?: number;
-  dataInicial: Date;
-  dataFinal?: Date;
-  data?: Date;
+  dataInicial: Date | string;
+  dataFinal?: Date | string;
+  data?: Date | string;
   tipo: TipoLancamento;
   tipoRecorrencia: TipoRecorrencia;
   tipoPeriodicidade?: TipoPeriodicidade;
