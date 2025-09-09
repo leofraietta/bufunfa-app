@@ -131,9 +131,8 @@ app.UseExceptionHandler(appBuilder =>
     });
 });
 
-// Temporariamente desabilitar autenticação para debug
-// app.UseAuthentication(); 
-// app.UseAuthorization();
+app.UseAuthentication(); 
+app.UseAuthorization();
 
 app.MapControllers();
 

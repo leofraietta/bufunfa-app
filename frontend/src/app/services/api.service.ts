@@ -254,22 +254,24 @@ export class ApiService {
 
   // Folhas Mensais
   getFolhasMensais(contaId?: number): Observable<FolhaMensal[]> {
-    const url = contaId ? `${this.baseUrl}/folhas-mensais?contaId=${contaId}` : `${this.baseUrl}/folhas-mensais`;
+    const url = contaId ? `${this.baseUrl}/folhasmensais?contaId=${contaId}` : `${this.baseUrl}/folhasmensais`;
     return this.http.get<FolhaMensal[]>(url, { headers: this.getHeaders() });
   }
 
   getFolhaMensal(contaId: number, mesAno: string): Observable<FolhaMensal> {
-    return this.http.get<FolhaMensal>(`${this.baseUrl}/folhas-mensais/${contaId}/${mesAno}`, 
+    // Converter mesAno (formato "2025-09") para ano e mes separados
+    const [ano, mes] = mesAno.split('-');
+    return this.http.get<FolhaMensal>(`${this.baseUrl}/folhasmensais/${contaId}/${ano}/${mes}`, 
       { headers: this.getHeaders() });
   }
 
   fecharFolhaMensal(contaId: number, mesAno: string): Observable<FolhaMensal> {
-    return this.http.post<FolhaMensal>(`${this.baseUrl}/folhas-mensais/${contaId}/${mesAno}/fechar`, 
+    return this.http.post<FolhaMensal>(`${this.baseUrl}/folhasmensais/${contaId}/${mesAno}/fechar`, 
       {}, { headers: this.getHeaders() });
   }
 
   reabrirFolhaMensal(contaId: number, mesAno: string): Observable<FolhaMensal> {
-    return this.http.post<FolhaMensal>(`${this.baseUrl}/folhas-mensais/${contaId}/${mesAno}/reabrir`, 
+    return this.http.post<FolhaMensal>(`${this.baseUrl}/folhasmensais/${contaId}/${mesAno}/reabrir`, 
       {}, { headers: this.getHeaders() });
   }
 

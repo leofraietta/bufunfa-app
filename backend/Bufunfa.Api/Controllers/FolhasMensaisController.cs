@@ -21,7 +21,16 @@ namespace Bufunfa.Api.Controllers
         private int ObterUsuarioId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return int.TryParse(userIdClaim, out var userId) ? userId : 0;
+            Console.WriteLine($"DEBUG: UserIdClaim = {userIdClaim}");
+            
+            if (int.TryParse(userIdClaim, out var userId))
+            {
+                Console.WriteLine($"DEBUG: UserId parsed = {userId}");
+                return userId;
+            }
+            
+            Console.WriteLine("DEBUG: Failed to parse userId, returning 0");
+            return 0;
         }
 
         [HttpGet("{ano}/{mes}")]
@@ -47,15 +56,27 @@ namespace Bufunfa.Api.Controllers
         {
             try
             {
+                Console.WriteLine($"DEBUG: Endpoint chamado - contaId: {contaId}, ano: {ano}, mes: {mes}");
+                
                 var usuarioId = ObterUsuarioId();
+                Console.WriteLine($"DEBUG: UsuarioId obtido: {usuarioId}");
+                
                 if (usuarioId == 0)
+                {
+                    Console.WriteLine("DEBUG: Retornando Unauthorized - usuário não identificado");
                     return Unauthorized("Usuário não identificado");
+                }
 
+                Console.WriteLine($"DEBUG: Chamando ObterFolhaMensalAsync com usuarioId: {usuarioId}, contaId: {contaId}, ano: {ano}, mes: {mes}");
                 var folha = await _folhaMensalService.ObterFolhaMensalAsync(usuarioId, contaId, ano, mes);
+                Console.WriteLine($"DEBUG: Folha obtida: {folha?.Id}");
+                
                 return Ok(folha);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"DEBUG: Erro capturado: {ex.Message}");
+                Console.WriteLine($"DEBUG: StackTrace: {ex.StackTrace}");
                 return StatusCode(500, $"Erro interno: {ex.Message}");
             }
         }

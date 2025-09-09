@@ -19,6 +19,17 @@ export class AuthService {
     const storedUser = this.getStoredUser();
     this.currentUserSubject = new BehaviorSubject<User | null>(storedUser);
     this.currentUser = this.currentUserSubject.asObservable();
+    
+    // Para desenvolvimento: criar usuário mock se não existir
+    if (!storedUser) {
+      this.createMockUser();
+    }
+  }
+
+  private createMockUser(): void {
+    // Token JWT mock para desenvolvimento
+    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwibmFtZSI6IlVzdWFyaW8gVGVzdGUiLCJlbWFpbCI6InRlc3RlQGV4YW1wbGUuY29tIiwiaWF0IjoxNTE2MjM5MDIyfQ.mock_signature';
+    this.setUserData(mockToken, '1', 'Usuario Teste', 'teste@example.com');
   }
 
   public get currentUserValue(): User | null {
