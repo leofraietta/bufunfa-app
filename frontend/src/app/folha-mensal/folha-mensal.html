@@ -113,114 +113,295 @@
 
     <!-- Planilha de Lançamentos -->
     <div class="lancamentos-section">
-      <mat-card class="lancamentos-card">
+      <!-- Lançamentos por Categoria -->
+      <mat-card class="lancamentos-card categoria-card" *ngIf="categoriasAgrupadas.length > 0">
         <mat-card-header>
-          <mat-card-title>Lançamentos por Categoria</mat-card-title>
+          <mat-card-title>
+            <mat-icon>category</mat-icon>
+            Lançamentos por Categoria
+          </mat-card-title>
+          <mat-card-subtitle>{{ getTotalLancamentosCategorias() }} lançamento(s) organizados</mat-card-subtitle>
         </mat-card-header>
         
         <mat-card-content>
-          <div class="spreadsheet-container">
-            <!-- Cabeçalho da Planilha -->
-            <div class="spreadsheet-header">
-              <div class="col-descricao">Descrição</div>
-              <div class="col-tipo">Tipo</div>
-              <div class="col-data">Data</div>
-              <div class="col-valor">Provisionado</div>
-              <div class="col-valor">Real</div>
-              <div class="col-status">Status</div>
-              <div class="col-acoes">Ações</div>
+          <div class="modern-table-container">
+            <!-- Cabeçalho Moderno -->
+            <div class="table-header">
+              <div class="header-cell col-descricao">
+                <mat-icon>description</mat-icon>
+                <span>Descrição</span>
+              </div>
+              <div class="header-cell col-tipo">
+                <mat-icon>swap_vert</mat-icon>
+                <span>Tipo</span>
+              </div>
+              <div class="header-cell col-data">
+                <mat-icon>event</mat-icon>
+                <span>Data</span>
+              </div>
+              <div class="header-cell col-valor">
+                <mat-icon>account_balance_wallet</mat-icon>
+                <span>Provisionado</span>
+              </div>
+              <div class="header-cell col-valor">
+                <mat-icon>payments</mat-icon>
+                <span>Valor Real</span>
+              </div>
+              <div class="header-cell col-status">
+                <mat-icon>info</mat-icon>
+                <span>Status</span>
+              </div>
+              <div class="header-cell col-acoes">
+                <mat-icon>settings</mat-icon>
+                <span>Ações</span>
+              </div>
             </div>
 
-            <!-- Grupos por Categoria -->
-            <div class="categoria-group" *ngFor="let categoria of categoriasAgrupadas">
-              <!-- Cabeçalho da Categoria -->
-              <div class="categoria-header">
-                <div class="categoria-info">
-                  <h4>{{ categoria.nome }}</h4>
-                  <span class="categoria-resumo">
-                    {{ categoria.lancamentos.length }} lançamento(s)
-                  </span>
+            <!-- Corpo da Tabela -->
+            <div class="table-body">
+              <!-- Grupos por Categoria -->
+              <div class="categoria-group" *ngFor="let categoria of categoriasAgrupadas; trackBy: trackByCategoria">
+                <!-- Cabeçalho da Categoria -->
+                <div class="categoria-header" [class.expanded]="categoria.expanded" (click)="toggleCategoria(categoria)">
+                  <div class="categoria-info">
+                    <mat-icon class="expand-icon" [class.rotated]="categoria.expanded">expand_more</mat-icon>
+                    <h4>{{ categoria.nome }}</h4>
+                    <span class="categoria-resumo">{{ categoria.lancamentos.length }} lançamento(s)</span>
+                  </div>
+                  <div class="categoria-valores">
+                    <span class="valor-provisionado">Prov: {{ categoria.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    <span class="valor-real">Real: {{ categoria.valorReal | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    <span class="diferenca" [ngClass]="{'positive': categoria.diferenca >= 0, 'negative': categoria.diferenca < 0}">
+                      Dif: {{ categoria.diferenca | currency:'BRL':'symbol':'1.2-2' }}
+                    </span>
+                  </div>
                 </div>
-                <div class="categoria-valores">
-                  <span class="valor-provisionado">{{ categoria.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}</span>
-                  <span class="valor-real">{{ categoria.valorReal | currency:'BRL':'symbol':'1.2-2' }}</span>
-                  <span class="diferenca" [ngClass]="{'positive': categoria.diferenca >= 0, 'negative': categoria.diferenca < 0}">
-                    {{ categoria.diferenca | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
+
+              <!-- Lançamentos da Categoria (Expansível) -->
+              <div class="lancamentos-container" *ngIf="categoria.expanded">
+                <div class="transaction-row" *ngFor="let lancamento of categoria.lancamentos; trackBy: trackByLancamento"
+                     [ngClass]="{
+                       'realizado': lancamento.realizado,
+                       'pendente': !lancamento.realizado && !lancamento.cancelado,
+                       'cancelado': lancamento.cancelado,
+                       'receita': lancamento.tipo === 1,
+                       'despesa': lancamento.tipo === 2
+                     }">
+                  
+                  <div class="cell col-descricao">
+                    {{ lancamento.descricao }}
+                  </div>
+                  
+                  <div class="cell col-tipo">
+                    <span class="tipo-badge" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                      {{ getTipoLancamentoText(lancamento.tipo) }}
+                    </span>
+                  </div>
+                  
+                  <div class="cell col-data">
+                    {{ getFormattedDate(lancamento.dataInicial) }}
+                  </div>
+                  
+                  <div class="cell col-valor" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    {{ (lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                  </div>
+                  
+                  <div class="cell col-valor" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    <span *ngIf="lancamento.realizado">{{ lancamento.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    <span *ngIf="!lancamento.realizado" class="valor-pendente">Não realizado</span>
+                  </div>
+                  
+                  <div class="cell col-status">
+                    <span class="status-chip" [ngClass]="{
+                      'realizado': lancamento.realizado,
+                      'pendente': !lancamento.realizado && !lancamento.cancelado,
+                      'cancelado': lancamento.cancelado
+                    }">
+                      {{ getStatusText(lancamento) }}
+                    </span>
+                  </div>
+                  
+                  <div class="cell col-acoes">
+                    <button mat-mini-fab color="primary" 
+                            *ngIf="!lancamento.realizado && !lancamento.cancelado" 
+                            (click)="abrirModalRealizarLancamento(lancamento)"
+                            matTooltip="Realizar Lançamento">
+                      <mat-icon>check</mat-icon>
+                    </button>
+                    <button mat-mini-fab 
+                            (click)="editarLancamento(lancamento)"
+                            matTooltip="Editar Lançamento">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-mini-fab color="warn"
+                            *ngIf="!lancamento.cancelado"
+                            (click)="cancelarLancamento(lancamento)"
+                            matTooltip="Cancelar Lançamento">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  </div>
+                </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
 
-              <!-- Lançamentos da Categoria -->
-              <div class="lancamento-row" *ngFor="let lancamento of categoria.lancamentos"
-                   [ngClass]="{'realizado': lancamento.realizado, 'pendente': !lancamento.realizado}">
-                
-                <div class="col-descricao">
-                  <span class="descricao">{{ lancamento.descricao }}</span>
-                  <span class="recorrencia" *ngIf="lancamento.tipoRecorrencia !== 1">
-                    {{ getTipoRecorrenciaText(lancamento.tipoRecorrencia) }}
-                  </span>
-                </div>
-                
-                <div class="col-tipo">
-                  <mat-icon class="tipo-icon" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
-                    {{ lancamento.tipo === 1 ? 'trending_up' : 'trending_down' }}
-                  </mat-icon>
-                  <span>{{ getTipoLancamentoText(lancamento.tipo) }}</span>
-                </div>
-                
-                <div class="col-data">
-                  {{ lancamento.dataInicial | date:'dd/MM/yyyy' }}
-                </div>
-                
-                <div class="col-valor">
-                  <span class="valor" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
-                    {{ (lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
-                </div>
-                
-                <div class="col-valor">
-                  <span class="valor" *ngIf="lancamento.realizado" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
-                    {{ lancamento.valor | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
-                  <span class="valor-pendente" *ngIf="!lancamento.realizado">-</span>
-                </div>
-                
-                <div class="col-status">
-                  <div class="status-badge" [ngClass]="{'realizado': lancamento.realizado, 'pendente': !lancamento.realizado, 'cancelado': lancamento.cancelado}">
-                    <mat-icon class="status-icon">
-                      {{ lancamento.realizado ? 'check_circle' : (lancamento.cancelado ? 'cancel' : 'schedule') }}
-                    </mat-icon>
-                    <span>{{ lancamento.realizado ? 'Realizado' : (lancamento.cancelado ? 'Cancelado' : 'Pendente') }}</span>
+      <!-- Lançamentos Esporádicos -->
+      <mat-card class="lancamentos-card esporadicos-card" *ngIf="lancamentosEsporadicos.length > 0">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>flash_on</mat-icon>
+            Lançamentos Esporádicos
+          </mat-card-title>
+          <mat-card-subtitle>{{ lancamentosEsporadicos.length }} lançamento(s) sem categoria</mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="esporadicos-container">
+            <div class="lancamento-esporadico" *ngFor="let lancamento of lancamentosEsporadicos; trackBy: trackByLancamento"
+                 [ngClass]="{
+                   'realizado': lancamento.realizado,
+                   'pendente': !lancamento.realizado && !lancamento.cancelado,
+                   'cancelado': lancamento.cancelado,
+                   'receita': lancamento.tipo === 1,
+                   'despesa': lancamento.tipo === 2
+                 }">
+              
+              <div class="esporadico-main">
+                <div class="esporadico-info">
+                  <div class="tipo-badge-small" [ngClass]="{'receita': lancamento.tipo === 1, 'despesa': lancamento.tipo === 2}">
+                    <mat-icon>{{ lancamento.tipo === 1 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                  </div>
+                  <div class="lancamento-details">
+                    <h4>{{ lancamento.descricao }}</h4>
+                    <div class="meta-info">
+                      <span class="data-info">
+                        <mat-icon>event</mat-icon>
+                        {{ getFormattedDate(lancamento.dataInicial) }}
+                      </span>
+                      <span class="tipo-info">{{ getTipoLancamentoText(lancamento.tipo) }}</span>
+                    </div>
                   </div>
                 </div>
                 
-                <div class="col-acoes">
-                  <button mat-icon-button *ngIf="!lancamento.realizado && !lancamento.cancelado" 
-                          (click)="realizarLancamento(lancamento)"
+                <div class="esporadico-valores">
+                  <div class="valor-provisionado">
+                    <span class="label">Provisionado</span>
+                    <span class="amount">{{ (lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  </div>
+                  <div class="valor-real" *ngIf="lancamento.realizado">
+                    <span class="label">Realizado</span>
+                    <span class="amount">{{ lancamento.valor | currency:'BRL':'symbol':'1.2-2' }}</span>
+                  </div>
+                  <div class="valor-pendente" *ngIf="!lancamento.realizado">
+                    <span class="label">Status</span>
+                    <span class="status">Pendente</span>
+                  </div>
+                </div>
+                
+                <div class="esporadico-acoes">
+                  <button mat-mini-fab color="primary" 
+                          *ngIf="!lancamento.realizado && !lancamento.cancelado" 
+                          (click)="abrirModalRealizarLancamento(lancamento)"
                           matTooltip="Realizar Lançamento">
                     <mat-icon>check</mat-icon>
                   </button>
-                  <button mat-icon-button (click)="editarLancamento(lancamento)"
+                  <button mat-mini-fab 
+                          (click)="editarLancamento(lancamento)"
                           matTooltip="Editar Lançamento">
                     <mat-icon>edit</mat-icon>
                   </button>
                 </div>
               </div>
             </div>
-
-            <!-- Estado Vazio -->
-            <div class="empty-state" *ngIf="categoriasAgrupadas.length === 0">
-              <mat-icon class="empty-icon">receipt_long</mat-icon>
-              <h3>Nenhum lançamento encontrado</h3>
-              <p>Não há lançamentos para este mês. Crie seu primeiro lançamento para começar.</p>
-              <button mat-raised-button color="primary">
-                <mat-icon>add</mat-icon>
-                Criar Lançamento
-              </button>
-            </div>
           </div>
         </mat-card-content>
       </mat-card>
+
+      <!-- Estado Vazio Melhorado -->
+      <div class="empty-state-modern" *ngIf="categoriasAgrupadas.length === 0 && lancamentosEsporadicos.length === 0">
+        <div class="empty-content">
+          <mat-icon class="empty-icon">receipt_long</mat-icon>
+          <h2>Nenhum lançamento encontrado</h2>
+          <p>Esta folha mensal ainda não possui lançamentos. Comece criando categorias e lançamentos para organizar suas finanças.</p>
+          <div class="empty-actions">
+            <button mat-raised-button color="primary" (click)="criarNovoLancamento()">
+              <mat-icon>add</mat-icon>
+              Criar Primeiro Lançamento
+            </button>
+            <button mat-stroked-button (click)="gerenciarCategorias()">
+              <mat-icon>category</mat-icon>
+              Gerenciar Categorias
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Realizar Lançamento -->
+<div class="modal-overlay" *ngIf="showRealizarModal" (click)="fecharModalRealizar()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        <mat-icon>check_circle</mat-icon>
+        Realizar Lançamento
+      </h2>
+      <button mat-icon-button (click)="fecharModalRealizar()" class="close-button">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <div class="modal-content" *ngIf="lancamentoSelecionado">
+      <div class="lancamento-info">
+        <div class="info-item">
+          <span class="label">Descrição:</span>
+          <span class="value">{{ lancamentoSelecionado.descricao }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Valor Provisionado:</span>
+          <span class="value">{{ (lancamentoSelecionado.valorProvisionado || lancamentoSelecionado.valor) | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">Data:</span>
+          <span class="value">{{ getFormattedDate(lancamentoSelecionado.dataInicial) }}</span>
+        </div>
+      </div>
+      
+      <mat-form-field appearance="outline" class="valor-real-field">
+        <mat-label>Valor Real *</mat-label>
+        <input matInput 
+               type="text" 
+               [(ngModel)]="valorRealInput"
+               (input)="formatarValorReal($event)"
+               placeholder="R$ 0,00"
+               class="valor-input">
+        <mat-icon matPrefix>payments</mat-icon>
+        <mat-hint>Digite o valor real do lançamento</mat-hint>
+      </mat-form-field>
+      
+      <div class="diferenca-display" *ngIf="valorRealNumerico !== null">
+        <div class="diferenca-item" [ngClass]="{'positive': getDiferenca() >= 0, 'negative': getDiferenca() < 0}">
+          <span class="diferenca-label">Diferença:</span>
+          <span class="diferenca-valor">{{ getDiferenca() | currency:'BRL':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button mat-stroked-button (click)="fecharModalRealizar()">
+        <mat-icon>cancel</mat-icon>
+        Cancelar
+      </button>
+      <button mat-raised-button color="primary" 
+              (click)="confirmarRealizacao()"
+              [disabled]="!valorRealInput || valorRealNumerico === null">
+        <mat-icon>check</mat-icon>
+        Realizar Lançamento
+      </button>
     </div>
   </div>
 </div>
