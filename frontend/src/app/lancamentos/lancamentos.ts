@@ -41,11 +41,13 @@ import { LancamentoDialogComponent } from './lancamento-dialog';
 export class LancamentosComponent implements OnInit {
   lancamentos: Lancamento[] = [];
   lancamentosFiltrados: Lancamento[] = [];
+  lancamentosAgrupados: any[] = [];
+  categorias: any[] = [];
   isLoading = false;
   error: string | null = null;
-  displayedColumns: string[] = ['descricao', 'valor', 'data', 'tipo', 'status', 'acoes'];
+  displayedColumns: string[] = ['descricao', 'valor', 'data', 'tipo', 'acoes'];
   filtroTipo: string = 'todos';
-  filtroStatus: string = 'todos';
+  filtroRecorrencia: string = 'todos';
 
   constructor(
     private dialog: MatDialog,
@@ -63,8 +65,7 @@ export class LancamentosComponent implements OnInit {
     this.apiService.getLancamentos().subscribe({
       next: (lancamentos) => {
         this.lancamentos = lancamentos;
-        this.aplicarFiltros();
-        this.isLoading = false;
+        this.loadCategorias();
       },
       error: (error) => {
         console.error('Erro ao carregar lançamentos:', error);
@@ -81,6 +82,7 @@ export class LancamentosComponent implements OnInit {
             tipo: 1, // TipoLancamento.Receita
             tipoRecorrencia: 2, // TipoRecorrencia.Recorrente
             contaId: 1,
+            categoriaId: 1, // Alimentação
             realizado: true,
             cancelado: false,
             quitado: false
@@ -92,8 +94,65 @@ export class LancamentosComponent implements OnInit {
             valorProvisionado: 200.00,
             dataInicial: new Date(), 
             tipo: 2, // TipoLancamento.Despesa
-            tipoRecorrencia: 1, // TipoRecorrencia.Esporadica
+            tipoRecorrencia: 2, // TipoRecorrencia.Recorrente
             contaId: 1,
+            categoriaId: 1, // Alimentação
+            realizado: false,
+            cancelado: false,
+            quitado: false
+          },
+          { 
+            id: 3, 
+            descricao: 'Gasolina', 
+            valor: 200.00,
+            valorProvisionado: 180.00,
+            dataInicial: new Date(), 
+            tipo: 2, // TipoLancamento.Despesa
+            tipoRecorrencia: 2, // TipoRecorrencia.Recorrente
+            contaId: 1,
+            categoriaId: 2, // Transporte
+            realizado: false,
+            cancelado: false,
+            quitado: false
+          },
+          { 
+            id: 4, 
+            descricao: 'Aluguel', 
+            valor: 1200.00,
+            valorProvisionado: 1200.00,
+            dataInicial: new Date(), 
+            tipo: 2, // TipoLancamento.Despesa
+            tipoRecorrencia: 2, // TipoRecorrencia.Recorrente
+            contaId: 1,
+            categoriaId: 3, // Moradia
+            realizado: true,
+            cancelado: false,
+            quitado: false
+          },
+          { 
+            id: 5, 
+            descricao: 'Plano de Saúde', 
+            valor: 350.00,
+            valorProvisionado: 350.00,
+            dataInicial: new Date(), 
+            tipo: 2, // TipoLancamento.Despesa
+            tipoRecorrencia: 2, // TipoRecorrencia.Recorrente
+            contaId: 1,
+            categoriaId: 4, // Saúde
+            realizado: false,
+            cancelado: false,
+            quitado: false
+          },
+          { 
+            id: 6, 
+            descricao: 'Curso Online', 
+            valor: 99.00,
+            valorProvisionado: 99.00,
+            dataInicial: new Date(), 
+            tipo: 2, // TipoLancamento.Despesa
+            tipoRecorrencia: 3, // TipoRecorrencia.Parcelado
+            contaId: 1,
+            categoriaId: 5, // Educação
             realizado: false,
             cancelado: false,
             quitado: false
@@ -161,17 +220,20 @@ export class LancamentosComponent implements OnInit {
       lancamentos = lancamentos.filter(l => l.tipo === tipoFiltro);
     }
 
-    // Filtro por status
-    if (this.filtroStatus !== 'todos') {
-      switch (this.filtroStatus) {
-        case 'realizados':
-          lancamentos = lancamentos.filter(l => l.realizado);
+    // Filtro por tipo de recorrência
+    if (this.filtroRecorrencia !== 'todos') {
+      switch (this.filtroRecorrencia) {
+        case 'recorrente':
+          lancamentos = lancamentos.filter(l => 
+            l.tipoRecorrencia === 2 || 
+            (typeof l.tipoRecorrencia === 'string' && (l.tipoRecorrencia as string).toLowerCase() === 'recorrente')
+          );
           break;
-        case 'pendentes':
-          lancamentos = lancamentos.filter(l => !l.realizado && !l.cancelado);
-          break;
-        case 'cancelados':
-          lancamentos = lancamentos.filter(l => l.cancelado);
+        case 'parcelado':
+          lancamentos = lancamentos.filter(l => 
+            l.tipoRecorrencia === 3 || 
+            (typeof l.tipoRecorrencia === 'string' && (l.tipoRecorrencia as string).toLowerCase() === 'parcelado')
+          );
           break;
       }
     }
@@ -180,6 +242,8 @@ export class LancamentosComponent implements OnInit {
     this.lancamentosFiltrados = lancamentos.sort((a, b) => 
       new Date(b.dataInicial).getTime() - new Date(a.dataInicial).getTime()
     );
+    this.groupLancamentosByCategory();
+    console.log('Lançamentos filtrados:', this.lancamentosFiltrados);
   }
 
   onFiltroChange() {
@@ -199,8 +263,53 @@ export class LancamentosComponent implements OnInit {
     return this.apiService.getTipoLancamentoText(tipo);
   }
 
-  getTipoRecorrenciaText(tipo: number): string {
+  getTipoRecorrenciaText(tipo: number | string): string {
+    if (typeof tipo === 'string') {
+      return tipo;
+    }
     return this.apiService.getTipoRecorrenciaText(tipo);
+  }
+
+  getTipoRecorrenciaIcon(tipo: number | string): string {
+    if (typeof tipo === 'string') {
+      switch (tipo.toLowerCase()) {
+        case 'recorrente': return 'repeat';
+        case 'parcelado': return 'payment';
+        default: return 'help_outline';
+      }
+    }
+    
+    switch (tipo) {
+      case 2: return 'repeat'; // Recorrente
+      case 3: return 'payment'; // Parcelado
+      default: return 'help_outline';
+    }
+  }
+
+  getCategoriaName(categoriaId: number | null): string {
+    if (!categoriaId) return '';
+    const categoria = this.categorias.find(c => c.id === categoriaId);
+    return categoria ? categoria.nome : '';
+  }
+
+  getCategoriaColor(categoriaId: number | null): string {
+    if (!categoriaId) return '#2196f3';
+    
+    const colors = [
+      '#4caf50', // Verde
+      '#ff9800', // Laranja  
+      '#2196f3', // Azul
+      '#f44336', // Vermelho
+      '#9c27b0', // Roxo
+      '#00bcd4', // Ciano
+      '#ff5722', // Laranja escuro
+      '#795548', // Marrom
+      '#607d8b', // Azul acinzentado
+      '#e91e63'  // Rosa
+    ];
+    
+    const colorIndex = (categoriaId - 1) % colors.length;
+    return colors[colorIndex];
   }
 
   getTipoLancamentoIcon(tipo: number): string {
@@ -257,6 +366,69 @@ export class LancamentosComponent implements OnInit {
       .reduce((total, l) => total + l.valor, 0);
   }
 
+  loadCategorias() {
+    this.apiService.getCategorias().subscribe({
+      next: (categorias) => {
+        this.categorias = categorias;
+        this.aplicarFiltros();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar categorias:', error);
+        // Fallback para dados mockados
+        this.categorias = [
+          { id: 1, nome: 'Alimentação' },
+          { id: 2, nome: 'Transporte' },
+          { id: 3, nome: 'Moradia' },
+          { id: 4, nome: 'Saúde' },
+          { id: 5, nome: 'Educação' }
+        ];
+        this.aplicarFiltros();
+        this.isLoading = false;
+      }
+    });
+  }
+
+  groupLancamentosByCategory() {
+    // Ordenar lançamentos por categoria e depois por descrição
+    this.lancamentosFiltrados.sort((a, b) => {
+      const categoriaA = this.getCategoriaName(a.categoriaId || null) || 'Sem categoria';
+      const categoriaB = this.getCategoriaName(b.categoriaId || null) || 'Sem categoria';
+      
+      if (categoriaA !== categoriaB) {
+        return categoriaA.localeCompare(categoriaB);
+      }
+      
+      return a.descricao.localeCompare(b.descricao);
+    });
+
+    // Agrupar lançamentos por categoria para exibição com rowspan
+    const grupos: { [key: string]: Lancamento[] } = {};
+    
+    this.lancamentosFiltrados.forEach(lancamento => {
+      const categoriaNome = this.getCategoriaName(lancamento.categoriaId || null) || 'Sem categoria';
+      if (!grupos[categoriaNome]) {
+        grupos[categoriaNome] = [];
+      }
+      grupos[categoriaNome].push(lancamento);
+    });
+
+    // Converter para array com informações de rowspan
+    this.lancamentosAgrupados = [];
+    Object.keys(grupos).forEach(categoriaNome => {
+      const lancamentosCategoria = grupos[categoriaNome];
+      lancamentosCategoria.forEach((lancamento, index) => {
+        this.lancamentosAgrupados.push({
+          ...lancamento,
+          categoriaNome,
+          categoriaColor: this.getCategoriaColor(lancamento.categoriaId || null),
+          isFirstInCategory: index === 0,
+          categoryRowspan: index === 0 ? lancamentosCategoria.length : 0
+        });
+      });
+    });
+  }
+
   realizarLancamento(lancamento: Lancamento) {
     const valorReal = prompt(`Valor real para "${lancamento.descricao}":`, lancamento.valor.toString());
     
@@ -275,6 +447,25 @@ export class LancamentosComponent implements OnInit {
         });
       }
     }
+  }
+
+  getDarkerColor(hexColor: string): string {
+    // Remove # if present
+    const color = hexColor.replace('#', '');
+    
+    // Convert hex to RGB
+    const r = parseInt(color.substr(0, 2), 16);
+    const g = parseInt(color.substr(2, 2), 16);
+    const b = parseInt(color.substr(4, 2), 16);
+    
+    // Darken by 30%
+    const darkerR = Math.floor(r * 0.7);
+    const darkerG = Math.floor(g * 0.7);
+    const darkerB = Math.floor(b * 0.7);
+    
+    // Convert back to hex
+    const toHex = (n: number) => n.toString(16).padStart(2, '0');
+    return `#${toHex(darkerR)}${toHex(darkerG)}${toHex(darkerB)}`;
   }
 
   getFormattedDate(dateValue: any): string {

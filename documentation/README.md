@@ -35,18 +35,25 @@ O Bufunfa é um aplicativo web de controle financeiro pessoal que permite aos us
 - **Saldo Inicial**: Configuração do saldo inicial de cada conta
 
 ### 3. Gestão de Lançamentos
-- **Receitas e Despesas**: Registro completo de transações
+- **Templates de Lançamentos**: Cadastro de lançamentos que serão incluídos automaticamente nas Folhas Mensais
+- **Receitas e Despesas**: Definição de tipos de transações (sempre com status "Provisional")
 - **Categorização**: Sistema de categorias personalizáveis
-- **Recorrência**: Lançamentos mensais, semanais, etc.
-- **Parcelamento**: Controle de compras parceladas
-- **Consolidação de Faturas**: Fechamento automático de cartões
+- **Recorrência**: Lançamentos esporádicos, recorrentes ou parcelados
+- **Periodicidade**: Configuração de frequência (semanal, mensal, etc.)
+- **Separação de Responsabilidades**: Esta tela NÃO permite realizar lançamentos ou inserir valores reais
 
-### 4. Contas Conjuntas
+### 4. Gestão de Folha Mensal
+- **Lançamentos Efetivos**: Realização de lançamentos específicos de um mês
+- **Valores Reais**: Inserção de valores reais quando o lançamento é realizado
+- **Status de Lançamentos**: Controle de status (Realizado/Cancelado/Quitado)
+- **Gestão Mensal**: Foco na execução e acompanhamento mensal
+
+### 5. Contas Conjuntas
 - **Compartilhamento**: Contas compartilhadas entre usuários
 - **Rateio**: Sistema de divisão proporcional de gastos
 - **Apuração**: Cálculo automático de valores devidos
 
-### 5. Dashboard e Relatórios
+### 6. Dashboard e Relatórios
 - **Visão Geral**: Resumo financeiro mensal
 - **Gráficos**: Visualização de receitas vs despesas
 - **Extratos**: Histórico detalhado de transações

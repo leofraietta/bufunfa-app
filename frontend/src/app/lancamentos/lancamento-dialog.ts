@@ -84,8 +84,10 @@ export class LancamentoDialogComponent implements OnInit {
   }
 
   // Método para converter string formatada em número
-  parseCurrency(value: string): number {
+  parseCurrency(value: any): number {
     if (!value) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string') return 0;
     // Remove todos os caracteres não numéricos exceto vírgula
     const cleanValue = value.replace(/[^\d,]/g, '');
     // Substitui vírgula por ponto para conversão
@@ -144,22 +146,23 @@ export class LancamentoDialogComponent implements OnInit {
     
     if (this.isEdit && this.data.lancamento) {
       this.populateForm(this.data.lancamento);
+    } else {
+      // Para novos lançamentos, inicializar com Recorrente selecionado
+      this.onTipoRecorrenciaChange(2);
     }
   }
 
   createForm(): FormGroup {
     return this.fb.group({
-      descricao: ['', [Validators.required, Validators.minLength(2)]],
-      tipo: ['', Validators.required],
-      valorProvisionado: [null, [Validators.required, Validators.min(0.01)]],
-      valorReal: [null],
+      descricao: ['', Validators.required],
+      tipo: [1, Validators.required],
+      valorProvisionado: ['', Validators.required],
       data: [new Date(), Validators.required],
-      tipoRecorrencia: ['', Validators.required],
-      status: ['Provisional'],
-      tipoPeriodicidade: [null],
+      tipoRecorrencia: [2, Validators.required], // Padrão: Recorrente
+      tipoPeriodicidade: ['Mensal', Validators.required], // Padrão: Mensal para recorrente
       intervaloDias: [null],
       numeroParcelas: [null],
-      contaId: ['', Validators.required],
+      contaId: [null, Validators.required],
       categoriaId: [null]
     });
   }
@@ -279,10 +282,8 @@ export class LancamentoDialogComponent implements OnInit {
       descricao: lancamento.descricao,
       tipo: tipoNumerico,
       valorProvisionado: lancamento.valorProvisionado || lancamento.valor,
-      valorReal: lancamento.valorReal,
       data: dataFormatada,
       tipoRecorrencia: tipoRecorrenciaNumerico,
-      status: statusMapeado,
       tipoPeriodicidade: tipoPeriodicidadeNumerico,
       intervaloDias: lancamento.intervaloDias,
       numeroParcelas: lancamento.quantidadeParcelas || lancamento.numeroParcelas,
@@ -302,14 +303,9 @@ export class LancamentoDialogComponent implements OnInit {
     // Atualizar os campos de moeda com formatação adequada
     setTimeout(() => {
       const valorProvisionadoInput = document.querySelector('input[formControlName="valorProvisionado"]') as HTMLInputElement;
-      const valorRealInput = document.querySelector('input[formControlName="valorReal"]') as HTMLInputElement;
       
       if (valorProvisionadoInput && lancamento.valorProvisionado) {
         valorProvisionadoInput.value = this.formatCurrencyDisplay(lancamento.valorProvisionado);
-      }
-      
-      if (valorRealInput && lancamento.valorReal) {
-        valorRealInput.value = this.formatCurrencyDisplay(lancamento.valorReal);
       }
     }, 100);
   }
@@ -433,43 +429,41 @@ export class LancamentoDialogComponent implements OnInit {
       console.log('tipoPeriodicidade no form:', formData.tipoPeriodicidade);
       console.log('Valor atual no controle:', this.lancamentoForm.get('tipoPeriodicidade')?.value);
       
+      // Converter valores de moeda para números
+      const valorProvisionado = this.parseCurrency(formData.valorProvisionado);
+      
       // Preparar dados para envio - converter strings para números quando necessário
       const lancamentoData = {
         ...(this.isEdit && { id: this.data.lancamento.id }), // Incluir ID apenas para edição
         descricao: formData.descricao,
         tipo: typeof formData.tipo === 'string' ? this.getTipoNumerico(formData.tipo) : formData.tipo,
-        valorProvisionado: formData.valorProvisionado,
-        valorReal: formData.valorReal,
+        valorProvisionado: valorProvisionado,
+        valor: valorProvisionado,
         dataInicial: formData.data,
-        tipoRecorrencia: typeof formData.tipoRecorrencia === 'string' ? this.getTipoRecorrenciaNumerico(formData.tipoRecorrencia) : formData.tipoRecorrencia,
-        status: formData.status || 1, // Default para Provisionado se não especificado
+        tipoRecorrencia: formData.tipoRecorrencia,
         tipoPeriodicidade: formData.tipoPeriodicidade,
         intervaloDias: formData.intervaloDias,
-        quantidadeParcelas: formData.numeroParcelas,
+        numeroParcelas: formData.numeroParcelas,
         contaId: formData.contaId,
         categoriaId: formData.categoriaId,
-        dataFinal: formData.dataFinal,
-        diaVencimento: formData.diaVencimento,
-        ajustarDiaUtil: formData.ajustarDiaUtil || false,
-        processarRetroativo: formData.processarRetroativo || false
+        status: 'Provisional'
       };
-      
-      console.log('Dados preparados para envio:', lancamentoData);
-      console.log('tipoPeriodicidade sendo enviado:', lancamentoData.tipoPeriodicidade);
 
-      const operation = this.isEdit 
+      console.log('Dados do lançamento a serem salvos:', lancamentoData);
+
+      const request = this.isEdit 
         ? this.apiService.updateLancamento(this.data.lancamento.id, lancamentoData)
         : this.apiService.createLancamento(lancamentoData);
 
-      operation.subscribe({
-        next: (result: any) => {
+      request.subscribe({
+        next: (result) => {
+          console.log('Lançamento salvo com sucesso:', result);
           this.isLoading = false;
           this.dialogRef.close(result);
         },
-        error: (error: any) => {
-          this.isLoading = false;
+        error: (error) => {
           console.error('Erro ao salvar lançamento:', error);
-          // TODO: Mostrar mensagem de erro para o usuário
+          this.isLoading = false;
         }
       });
     }

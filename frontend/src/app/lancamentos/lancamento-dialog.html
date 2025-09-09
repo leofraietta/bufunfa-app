@@ -45,18 +45,7 @@
         </mat-form-field>
       </div>
 
-      <div class="form-row double">
-        <mat-form-field appearance="outline">
-          <mat-label>Valor Real</mat-label>
-          <input matInput type="text" formControlName="valorReal" 
-                 placeholder="1.000,00" 
-                 (input)="onCurrencyInput($event, 'valorReal')"
-                 (blur)="onCurrencyBlur($event, 'valorReal')">
-          <span matTextPrefix>R$ </span>
-          <mat-icon matSuffix>paid</mat-icon>
-          <mat-hint>Deixe vazio se ainda não foi realizado</mat-hint>
-        </mat-form-field>
-
+      <div class="form-row single">
         <mat-form-field appearance="outline">
           <mat-label>Data</mat-label>
           <input matInput [matDatepicker]="dataPicker" formControlName="data">
@@ -68,11 +57,10 @@
         </mat-form-field>
       </div>
 
-      <div class="form-row double">
+      <div class="form-row single">
         <mat-form-field appearance="outline">
           <mat-label>Tipo de Recorrência</mat-label>
           <mat-select formControlName="tipoRecorrencia" (selectionChange)="onTipoRecorrenciaChange($event.value)">
-            <mat-option [value]="1">Esporádica</mat-option>
             <mat-option [value]="2">Recorrente</mat-option>
             <mat-option [value]="3">Parcelada</mat-option>
           </mat-select>
@@ -80,17 +68,6 @@
           <mat-error *ngIf="lancamentoForm.get('tipoRecorrencia')?.hasError('required')">
             Tipo de recorrência é obrigatório
           </mat-error>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select formControlName="status">
-            <mat-option value="Provisional">Provisional</mat-option>
-            <mat-option value="Realizado">Realizado</mat-option>
-            <mat-option value="Cancelado">Cancelado</mat-option>
-            <mat-option value="Quitado">Quitado</mat-option>
-          </mat-select>
-          <mat-icon matSuffix>flag</mat-icon>
         </mat-form-field>
       </div>
 

@@ -46,114 +46,112 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Status</mat-label>
-            <mat-select [(value)]="filtroStatus" (selectionChange)="onFiltroChange()">
+            <mat-label>Tipo de Recorrência</mat-label>
+            <mat-select [(value)]="filtroRecorrencia" (selectionChange)="onFiltroChange()">
               <mat-option value="todos">Todos</mat-option>
-              <mat-option value="realizados">Realizados</mat-option>
-              <mat-option value="pendentes">Pendentes</mat-option>
-              <mat-option value="cancelados">Cancelados</mat-option>
+              <mat-option value="recorrente">Recorrentes</mat-option>
+              <mat-option value="parcelado">Parcelados</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
 
         <!-- Lançamentos Table -->
-        <div class="table-container" *ngIf="lancamentosFiltrados.length > 0">
-          <table mat-table [dataSource]="lancamentosFiltrados" class="lancamentos-table">
-            <!-- Descrição Column -->
-            <ng-container matColumnDef="descricao">
-              <th mat-header-cell *matHeaderCellDef>Lançamento</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <div class="lancamento-info">
-                  <div class="lancamento-header">
-                    <mat-icon class="lancamento-icon" [color]="getTipoLancamentoColor(lancamento.tipo)">
-                      {{ getTipoLancamentoIcon(lancamento.tipo) }}
-                    </mat-icon>
-                    <div class="lancamento-details">
-                      <span class="lancamento-descricao">{{ lancamento.descricao }}</span>
-                      <span class="lancamento-id">#{{ lancamento.id }}</span>
+        <div class="table-container" *ngIf="lancamentosAgrupados.length > 0">
+          <table class="lancamentos-table-custom">
+            <thead>
+              <tr>
+                <th class="categoria-header"></th>
+                <th class="lancamento-header">Lançamento</th>
+                <th class="valor-header">Valor</th>
+                <th class="data-header">Data</th>
+                <th class="tipo-header">Tipo</th>
+                <th class="acoes-header">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let lancamento of lancamentosAgrupados" 
+                  class="lancamento-row"
+                  [style.border-left-color]="lancamento.categoriaColor">
+                
+                <!-- Categoria Column with rowspan -->
+                <td *ngIf="lancamento.isFirstInCategory && lancamento.categoriaNome !== 'Sem categoria'" 
+                    class="categoria-cell"
+                    [attr.rowspan]="lancamento.categoryRowspan"
+                    [style.background-color]="lancamento.categoriaColor + '20'">
+                  <div class="categoria-vertical-text"
+                       [style.color]="getDarkerColor(lancamento.categoriaColor)">
+                    {{ lancamento.categoriaNome }}
+                  </div>
+                </td>
+
+                <!-- Empty category cell for uncategorized rows -->
+                <td *ngIf="lancamento.categoriaNome === 'Sem categoria'" class="empty-categoria-cell"></td>
+
+                <!-- Lançamento Column -->
+                <td class="lancamento-cell">
+                  <div class="lancamento-info">
+                    <div class="lancamento-header">
+                      <div class="icones-container">
+                        <mat-icon class="tipo-icon" [color]="getTipoLancamentoColor(lancamento.tipo)" 
+                                  matTooltip="{{ getTipoLancamentoText(lancamento.tipo) }}">
+                          {{ getTipoLancamentoIcon(lancamento.tipo) }}
+                        </mat-icon>
+                        <mat-icon class="recorrencia-icon" 
+                                  matTooltip="{{ getTipoRecorrenciaText(lancamento.tipoRecorrencia) }}">
+                          {{ getTipoRecorrenciaIcon(lancamento.tipoRecorrencia) }}
+                        </mat-icon>
+                      </div>
+                      <div class="lancamento-details">
+                        <span class="lancamento-descricao">{{ lancamento.descricao }}</span>
+                        <div class="lancamento-meta">
+                          <span class="lancamento-id">#{{ lancamento.id }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </td>
-            </ng-container>
+                </td>
 
-            <!-- Valor Column -->
-            <ng-container matColumnDef="valor">
-              <th mat-header-cell *matHeaderCellDef>Valor</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <div class="valor-container">
-                  <span class="valor-principal" [ngClass]="{'positive': lancamento.tipo === 1, 'negative': lancamento.tipo === 2}">
-                    {{ (lancamento.valorReal || lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                <!-- Valor Column -->
+                <td class="valor-cell">
+                  <div class="valor-container">
+                    <span class="valor-principal" [ngClass]="{'positive': lancamento.tipo === 1, 'negative': lancamento.tipo === 2}">
+                      {{ (lancamento.valorReal || lancamento.valorProvisionado || lancamento.valor) | currency:'BRL':'symbol':'1.2-2' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Data Column -->
+                <td class="data-cell">
+                  <span class="data-lancamento">
+                    {{ getFormattedDate(lancamento.data || lancamento.dataInicial) }}
                   </span>
-                  <span class="valor-provisionado" *ngIf="lancamento.valorProvisionado && lancamento.valorReal && lancamento.valorProvisionado !== lancamento.valorReal">
-                    Prev: {{ lancamento.valorProvisionado | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
-                </div>
-              </td>
-            </ng-container>
+                </td>
 
-            <!-- Data Column -->
-            <ng-container matColumnDef="data">
-              <th mat-header-cell *matHeaderCellDef>Data</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <span class="data-lancamento">
-                  {{ getFormattedDate(lancamento.data || lancamento.dataInicial) }}
-                </span>
-              </td>
-            </ng-container>
+                <!-- Tipo Column -->
+                <td class="tipo-cell">
+                  <mat-chip [color]="getTipoLancamentoColor(lancamento.tipo)" selected>
+                    {{ getTipoLancamentoText(lancamento.tipo) }}
+                  </mat-chip>
+                </td>
 
-            <!-- Tipo Column -->
-            <ng-container matColumnDef="tipo">
-              <th mat-header-cell *matHeaderCellDef>Tipo</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <mat-chip [color]="getTipoLancamentoColor(lancamento.tipo)" selected>
-                  {{ getTipoLancamentoText(lancamento.tipo) }}
-                </mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Status Column -->
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <mat-chip [color]="getStatusColor(lancamento)" selected>
-                  <mat-icon matChipAvatar>
-                    {{ lancamento.realizado ? 'check_circle' : (lancamento.cancelado ? 'cancel' : 'schedule') }}
-                  </mat-icon>
-                  {{ getStatusText(lancamento) }}
-                </mat-chip>
-              </td>
-            </ng-container>
-
-            <!-- Ações Column -->
-            <ng-container matColumnDef="acoes">
-              <th mat-header-cell *matHeaderCellDef>Ações</th>
-              <td mat-cell *matCellDef="let lancamento">
-                <div class="acoes-container">
-                  <button mat-icon-button 
-                          *ngIf="!lancamento.realizado && !lancamento.cancelado"
-                          color="accent"
-                          (click)="realizarLancamento(lancamento)"
-                          matTooltip="Realizar lançamento">
-                    <mat-icon>check</mat-icon>
-                  </button>
-                  <button mat-icon-button 
-                          (click)="editLancamento(lancamento)"
-                          matTooltip="Editar lançamento">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button 
-                          color="warn"
-                          (click)="deleteLancamento(lancamento.id)"
-                          matTooltip="Excluir lançamento">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="lancamento-row"></tr>
+                <!-- Ações Column -->
+                <td class="acoes-cell">
+                  <div class="acoes-container">
+                    <button mat-icon-button 
+                            (click)="editLancamento(lancamento)"
+                            matTooltip="Editar lançamento">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button 
+                            color="warn"
+                            (click)="deleteLancamento(lancamento.id)"
+                            matTooltip="Excluir lançamento">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </mat-card-content>

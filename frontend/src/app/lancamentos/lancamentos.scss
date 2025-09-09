@@ -96,85 +96,219 @@
       }
 
       .table-container {
-        overflow-x: auto;
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 16px;
+        overflow: visible;
 
-        .lancamentos-table {
+        .lancamentos-table-custom {
           width: 100%;
-          
-          .lancamento-row {
-            &:hover {
-              background-color: #f5f5f5;
+          border-collapse: separate;
+          border-spacing: 0 4px;
+
+          // Header styling
+          thead tr {
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            border-radius: 12px;
+          }
+
+          th {
+            background: transparent;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            padding: 12px 16px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            text-align: left;
+            height: 44px;
+
+            &:first-child {
+              border-radius: 8px 0 0 8px;
+              padding-left: 16px;
+              width: 32px;
+              min-width: 32px;
+            }
+
+            &:last-child {
+              border-radius: 0 8px 8px 0;
+              padding-right: 16px;
+            }
+
+            &.valor-header {
+              text-align: right;
             }
           }
 
-          .lancamento-info {
-            .lancamento-header {
+          // Row styling
+          .lancamento-row {
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid transparent;
+            height: 48px;
+          }
+
+          // Cell styling
+          td {
+            padding: 8px 12px;
+            vertical-align: middle;
+            background: white;
+            height: 48px;
+            border: none;
+            border-radius: 8px 0 0 8px;
+
+            &:first-child {
+              border-radius: 8px 0 0 8px !important;
+            }
+
+            &:last-child {
+              border-radius: 0 8px 8px 0 !important;
+            }
+          }
+
+          // Categoria column with vertical text
+          .categoria-cell {
+            width: 32px;
+            min-width: 32px;
+            max-width: 32px;
+            padding: 0 !important;
+            text-align: center;
+            position: relative;
+            border-radius: 8px 0 0 8px !important;
+            overflow: hidden;
+            z-index: 10;
+            box-shadow: none !important;
+
+            .categoria-vertical-text {
+              writing-mode: vertical-rl;
+              text-orientation: mixed;
+              font-weight: 700;
+              font-size: 10px;
+              white-space: nowrap;
+              width: 100%;
+              height: 100%;
               display: flex;
               align-items: center;
-              gap: 12px;
+              justify-content: center;
+              min-height: 32px;
+              line-height: 1;
+              letter-spacing: 0.5px;
+              transform: rotate(180deg);
+              margin: 0 auto;
+            }
+          }
 
-              .lancamento-icon {
-                font-size: 24px;
-              }
-
-              .lancamento-details {
+          // Empty category cell for uncategorized rows
+          .empty-categoria-cell {
+            width: 32px;
+            min-width: 32px;
+            max-width: 32px;
+            padding: 0 !important;
+            background-color: #f8f9fa !important;
+            border-radius: 8px 0 0 8px !important;
+            box-shadow: none !important;
+          }
+          // Specific cell styling
+          .lancamento-cell {
+            .lancamento-info {
+              .lancamento-header {
                 display: flex;
-                flex-direction: column;
+                align-items: center;
+                gap: 12px;
 
-                .lancamento-descricao {
-                  font-weight: 500;
-                  color: #212121;
+                .icones-container {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 4px;
+                  align-items: center;
+                  min-width: 48px;
+
+                  .tipo-icon {
+                    font-size: 20px;
+                    width: 20px;
+                    height: 20px;
+                  }
+
+                  .recorrencia-icon {
+                    font-size: 16px;
+                    width: 16px;
+                    height: 16px;
+                    color: #666;
+                  }
                 }
 
-                .lancamento-id {
-                  font-size: 12px;
-                  color: #757575;
+                .lancamento-details {
+                  flex: 1;
+                  min-width: 0;
+
+                  .lancamento-descricao {
+                    display: block;
+                    font-weight: 500;
+                    color: #212121;
+                    margin-bottom: 4px;
+                  }
+
+                  .lancamento-meta {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                    flex-wrap: wrap;
+
+                    .lancamento-id {
+                      font-size: 0.85rem;
+                      color: #757575;
+                      font-family: 'Roboto Mono', monospace;
+                    }
+                  }
                 }
               }
             }
           }
 
-          .valor-container {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
+          .valor-cell {
+            text-align: right;
 
-            .valor-principal {
-              font-family: 'Roboto Mono', monospace;
-              font-weight: 500;
+            .valor-container {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
 
-              &.positive {
-                color: #4caf50;
+              .valor-principal {
+                font-family: 'Roboto Mono', monospace;
+                font-weight: 500;
+
+                &.positive {
+                  color: #4caf50;
+                }
+
+                &.negative {
+                  color: #f44336;
+                }
               }
-
-              &.negative {
-                color: #f44336;
-              }
-            }
-
-            .valor-provisionado {
-              font-size: 12px;
-              color: #757575;
-              font-family: 'Roboto Mono', monospace;
             }
           }
 
-          .data-lancamento {
-            font-family: 'Roboto Mono', monospace;
-            color: #424242;
+          .data-cell {
+            .data-lancamento {
+              font-family: 'Roboto Mono', monospace;
+              color: #424242;
+            }
           }
 
-          .acoes-container {
-            display: flex;
-            gap: 4px;
+          .acoes-cell {
+            .acoes-container {
+              display: flex;
+              gap: 4px;
+              justify-content: center;
 
-            button {
-              width: 36px;
-              height: 36px;
-              line-height: 36px;
+              button {
+                width: 36px;
+                height: 36px;
+                line-height: 36px;
 
-              mat-icon {
-                font-size: 18px;
+                mat-icon {
+                  font-size: 18px;
+                }
               }
             }
           }
